@@ -14,6 +14,7 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile
+    image: ${TENANT_ID:-tenant_default}_backend:latest
     container_name: ${TENANT_ID:-tenant_default}_backend
     env_file:
       - .env
