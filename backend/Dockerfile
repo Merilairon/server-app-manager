@@ -34,12 +34,7 @@ COPY backend/ ./
 RUN cargo build --release
 
 # ---- Stage 3: runtime -------------------------------------------------------
-FROM debian:bookworm-slim AS runtime
-
-RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
-    ca-certificates libssl3 \
-    && apt-get autoremove -y \
-    && rm -rf /var/lib/apt/lists/*
+FROM gcr.io/distroless/cc-debian12 AS runtime
 
 WORKDIR /app
 
@@ -50,8 +45,5 @@ COPY --from=frontend-build /app/frontend/dist/frontend/browser /app/static
 ENV STATIC_DIR=/app/static
 ENV RUST_LOG=info
 EXPOSE 8080
-
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD /bin/bash -c 'exec 3<>/dev/tcp/localhost/8080 && printf "GET /healthz HTTP/1.0\r\n\r\n" >&3 && head -1 <&3 | grep -q " 200 "'
 
 CMD ["/app/appforge-backend"]
