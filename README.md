@@ -79,6 +79,35 @@ pnpm start                      # dev server at http://localhost:4200
 pnpm run build                  # production build → dist/frontend/browser/
 ```
 
+### Docker Dev Stack (Hot Reload)
+
+A separate `docker-compose.dev.yml` brings up Postgres, the backend (with `cargo-watch`), and the frontend (with `ng serve` HMR) — no Traefik, direct port access.
+
+```bash
+# 1. Create dev env overrides (optional — defaults work out of the box)
+cp .env.dev.example .env.dev
+
+# 2. Start the dev stack (builds images if needed)
+pnpm run dev:docker:up
+#   or: docker compose -f docker-compose.dev.yml --env-file .env.dev up -d --build
+
+# 3. Access the services
+#   Frontend (HMR):  http://localhost:4200  (proxies /api → backend)
+#   Backend API:     http://localhost:8080
+#   Postgres:        localhost:5432 (sam/sam/sam)
+
+# 4. View logs
+docker compose -f docker-compose.dev.yml logs -f backend frontend
+
+# 5. Stop
+pnpm run dev:docker:down
+
+# Full reset (wipes dev database)
+pnpm run dev:docker:reset
+```
+
+Hot reload: editing Rust files triggers `cargo-watch` to recompile and restart the backend. Editing Angular files triggers `ng serve` to rebuild and push updates via HMR.
+
 ## Project Structure
 
 ```

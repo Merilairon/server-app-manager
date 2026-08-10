@@ -26,13 +26,25 @@ Build, test, and verification commands for future sessions.
 - Node requirement: v24.15.0+ (pinned via Volta in `frontend/`)
 - Package manager: pnpm 11.0.9 (pinned via `packageManager` field)
 
-## Docker Compose stack
+## Docker Compose stack (production-like)
 
 - Build: `docker compose build`
 - Start: `docker compose up -d`
 - Stop / cleanup: `docker compose down` (add `-v` to remove volumes)
 - Logs: `docker compose logs -f backend`
 - Health check: `curl http://localhost/healthz`
+
+## Docker Compose dev stack (hot reload)
+
+- Prereq: `cp .env.dev.example .env.dev`
+- Start: `pnpm run dev:docker:up` (or `docker compose -f docker-compose.dev.yml --env-file .env.dev up -d --build`)
+- Logs: `docker compose -f docker-compose.dev.yml logs -f backend frontend`
+- Stop: `pnpm run dev:docker:down`
+- Full reset (wipes DB): `pnpm run dev:docker:reset`
+- Frontend (HMR): http://localhost:4200 (proxies /api → backend)
+- Backend API: http://localhost:8080
+- Postgres: localhost:5432 (sam/sam/sam)
+- Hot reload: backend uses cargo-watch, frontend uses ng serve --hmr
 
 ## CI / Lint
 

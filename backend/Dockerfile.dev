@@ -1,0 +1,36 @@
+# syntax=docker/dockerfile:1.7
+
+# Development image for the Rust backend with hot reload via cargo-watch.
+# Source code is bind-mounted at runtime; this image only prepares the toolchain
+# and pre-fetches dependencies so rebuilds are fast.
+
+FROM rust:1.94-slim
+
+WORKDIR /app/backend
+
+ENV CARGO_TERM_COLOR=always
+ENV RUST_LOG=info
+# sqlx offline mode is not needed for dev — the DB is live and reachable.
+ENV SQLX_OFFLINE=false
+
+# Build dependencies for sqlx / bollard native crates.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    pkg-config libssl-dev ca-certificates curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install cargo-watch for hot reload.
+RUN cargo install cargo-watch --locked
+
+# Pre-fetch dependencies by creating a stub crate.
+COPY backend/Cargo.toml backend/Cargo.lock* ./
+RUN mkdir -p src && echo 'fn main() {}' > src/main.rs && \
+    cargo build || true && \
+    rm -rf src
+
+# Source code is mounted at runtime via docker-compose volumes.
+# The cargo target dir is mounted to a named volume for incremental build caching.
+
+EXPOSE 8080
+
+# Watch for changes and recompile + restart on save.
+CMD ["cargo", "watch", "-x", "run"]

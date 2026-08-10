@@ -1,0 +1,109 @@
+# Server App Manager – Development stack with hot reload.
+#
+# Brings up:
+#   - db:         Postgres 17 (persistent dev data)
+#   - backend:    Rust/axum with cargo-watch (recompiles on save)
+#   - frontend:   Angular dev server with HMR (ng serve --hmr)
+#
+# No Traefik in dev — access the services directly:
+#   - Frontend (HMR):  http://localhost:4200  (proxies /api → backend)
+#   - Backend API:     http://localhost:8080
+#   - Postgres:        localhost:5432
+#
+# Usage:
+#   docker compose -f docker-compose.dev.yml --env-file .env.dev up
+#   docker compose -f docker-compose.dev.yml down -v   # wipe dev data
+
+name: ${TENANT_ID:-tenant_default}_dev
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile.dev
+    container_name: ${TENANT_ID:-tenant_default}_dev_backend
+    env_file:
+      - path: .env.dev
+        required: false
+      - path: .env
+        required: false
+    environment:
+      - DATABASE_URL=postgres://sam:sam@db:5432/sam
+      - RUST_LOG=${RUST_LOG:-debug}
+      - STATIC_DIR=/app/static
+      - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:4200}
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    volumes:
+      # Bind-mount source for hot reload.
+      - ./backend:/app/backend
+      # Persist compiled artifacts across container rebuilds.
+      - backend_target:/app/backend/target
+      # Persist cargo registry cache for faster dependency fetching.
+      - cargo_registry:/usr/local/cargo/registry
+    networks:
+      - dev
+    mem_limit: 1g
+    cpus: 1.0
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: ${TENANT_ID:-tenant_default}_dev_frontend
+    environment:
+      - NODE_ENV=development
+    depends_on:
+      - backend
+    ports:
+      - "4200:4200"
+    volumes:
+      # Bind-mount source for HMR.
+      - ./frontend:/app/frontend
+      # Anonymous volume masks container node_modules from the host bind mount,
+      # avoiding host/container platform mismatches.
+      - /app/frontend/node_modules
+    networks:
+      - dev
+    mem_limit: 512m
+    cpus: 0.5
+    restart: unless-stopped
+
+  db:
+    image: postgres:17-alpine
+    container_name: ${TENANT_ID:-tenant_default}_dev_db
+    environment:
+      POSTGRES_USER: sam
+      POSTGRES_PASSWORD: sam
+      POSTGRES_DB: sam
+    ports:
+      - "5432:5432"
+    networks:
+      - dev
+    volumes:
+      - pg_data_dev:/var/lib/postgresql/data
+    mem_limit: 256m
+    cpus: 0.25
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sam -d sam"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+networks:
+  dev:
+    name: ${TENANT_ID:-tenant_default}_dev
+    internal: false
+
+volumes:
+  backend_target:
+    name: ${TENANT_ID:-tenant_default}_dev_backend_target
+  cargo_registry:
+    name: ${TENANT_ID:-tenant_default}_dev_cargo_registry
+  pg_data_dev:
+    name: ${TENANT_ID:-tenant_default}_dev_pg_data

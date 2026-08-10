@@ -1,0 +1,26 @@
+# syntax=docker/dockerfile:1.7
+
+# Development image for the Angular frontend with HMR via ng serve.
+# Source code is bind-mounted at runtime; this image only prepares the toolchain
+# and pre-installs dependencies so the dev server starts fast.
+
+FROM node:24-alpine
+
+WORKDIR /app/frontend
+
+RUN corepack enable
+
+# Copy lockfiles and install deps first for layer caching.
+# node_modules is mounted as a named volume at runtime to keep it persistent
+# and avoid host/container platform mismatches.
+COPY package.json pnpm-lock.yaml* pnpm-workspace.yaml* ./
+RUN pnpm install --frozen-lockfile || pnpm install
+
+# Source code is mounted at runtime via docker-compose volumes.
+
+EXPOSE 4200
+
+# ng serve with HMR (enabled by default in development configuration),
+# bound to all interfaces for Docker access.
+# Uses npx to locate the local @angular/cli binary in node_modules/.bin.
+CMD ["npx", "ng", "serve", "--host", "0.0.0.0", "--port", "4200"]
