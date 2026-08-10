@@ -42,7 +42,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-COPY --from=backend-build /app/backend/target/release/server-app-manager-backend /app/server-app-manager-backend
+COPY --from=backend-build /app/backend/target/release/appforge-backend /app/appforge-backend
 COPY --from=backend-build /app/backend/migrations /app/migrations
 COPY --from=frontend-build /app/frontend/dist/frontend/browser /app/static
 
@@ -53,4 +53,4 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD curl -fsS http://localhost:8080/healthz || exit 1
 
-CMD ["/app/server-app-manager-backend"]
+CMD ["/app/appforge-backend"]

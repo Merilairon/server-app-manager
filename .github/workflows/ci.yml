@@ -30,7 +30,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: backend-build
-          path: backend/target/release/server-app-manager-backend
+          path: backend/target/release/appforge-backend
           if-no-files-found: warn
 
   build-frontend:
