@@ -27,6 +27,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "appforge-backend"
+version = "0.1.0"
+dependencies = [
+ "axum",
+ "bcrypt",
+ "bollard",
+ "chrono",
+ "dotenvy",
+ "jsonwebtoken",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "sqlx",
+ "thiserror",
+ "tokio",
+ "tower",
+ "tower-http",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
+]
+
+[[package]]
 name = "atoi"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1700,29 +1723,6 @@ dependencies = [
  "ryu",
  "serde",
  "unsafe-libyaml",
-]
-
-[[package]]
-name = "server-app-manager-backend"
-version = "0.1.0"
-dependencies = [
- "axum",
- "bcrypt",
- "bollard",
- "chrono",
- "dotenvy",
- "jsonwebtoken",
- "serde",
- "serde_json",
- "serde_yaml",
- "sqlx",
- "thiserror",
- "tokio",
- "tower",
- "tower-http",
- "tracing",
- "tracing-subscriber",
- "uuid",
 ]
 
 [[package]]
