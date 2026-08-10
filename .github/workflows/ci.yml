@@ -67,10 +67,7 @@ jobs:
       - name: Lint YAML files
         run: 'yamllint -d "{extends: default, rules: {line-length: disable, document-start: disable, truthy: disable}}" roles/ traefik/ docker-compose.yml'
       - name: Validate OpenAPI spec
-        run: |
-          corepack enable
-          pnpm add -g @redocly/cli@latest
-          redocly lint api/swagger.yaml
+        run: npx -y @redocly/cli lint api/swagger.yaml
 
   docker-build:
     name: Docker compose build
