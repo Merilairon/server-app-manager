@@ -44,6 +44,10 @@ services:
       - backend_target:/app/backend/target
       # Persist cargo registry cache for faster dependency fetching.
       - cargo_registry:/usr/local/cargo/registry
+      # Allow backend to manage host Docker containers.
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Mount RBAC roles definition.
+      - ./roles:/app/backend/roles:ro
     networks:
       - dev
     mem_limit: 1g
