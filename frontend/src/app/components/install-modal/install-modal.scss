@@ -70,10 +70,46 @@
   color: #22c55e;
 }
 
+h3 {
+  margin: 0 0 1rem;
+  font-size: 1rem;
+}
+
+.review-list {
+  margin: 0 0 1rem;
+}
+
+.review-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #1f2b45;
+  font-size: 0.875rem;
+}
+
+.review-row dt {
+  color: #94a3b8;
+}
+
+.review-row dd {
+  margin: 0;
+  color: #e6ecf5;
+}
+
+.checkbox-field {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .modal-actions {
   display: flex;
   justify-content: flex-end;
   margin-top: 1rem;
+}
+
+.modal-actions.split {
+  justify-content: space-between;
 }
 
 .modal-actions button,

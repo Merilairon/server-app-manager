@@ -8,7 +8,7 @@
     <div class="modal-body">
       @switch (step) {
         @case ('configure') {
-          <form [formGroup]="form" (ngSubmit)="install()">
+          <form [formGroup]="form" (ngSubmit)="goToReview()">
             @for (p of app.placeholders; track p.name) {
               <label class="field">
                 {{ p.label ?? p.name }}
@@ -26,11 +26,42 @@
             }
 
             <div class="modal-actions">
-              <button type="submit" [disabled]="!form.valid || loading">
-                {{ loading ? 'Installing…' : 'Install' }}
-              </button>
+              <button type="submit" [disabled]="!form.valid">Review</button>
             </div>
           </form>
+        }
+        @case ('review') {
+          <h3>Review configuration</h3>
+          <dl class="review-list">
+            @for (p of app.placeholders; track p.name) {
+              <div class="review-row">
+                <dt>{{ p.label ?? p.name }}</dt>
+                <dd>{{ displayValue(p.name, p.kind) }}</dd>
+              </div>
+            } @empty {
+              <p>No configuration required.</p>
+            }
+          </dl>
+
+          <label class="field checkbox-field">
+            <input
+              type="checkbox"
+              [checked]="backupConfirmed"
+              (change)="backupConfirmed = !backupConfirmed"
+            />
+            I have created a backup of existing data before installing
+          </label>
+
+          @if (error) {
+            <p class="error">{{ error }}</p>
+          }
+
+          <div class="modal-actions split">
+            <button type="button" (click)="step = 'configure'">Back</button>
+            <button (click)="confirmInstall()" [disabled]="!backupConfirmed">
+              Confirm & Install
+            </button>
+          </div>
         }
         @case ('install') {
           <p>Installing {{ app.name }}…</p>

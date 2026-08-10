@@ -83,15 +83,16 @@ functional story it implements and inherits that story's priority.
     install counts + social-proof line (N-ADOPT-2), Install action opens
     install modal.
   - Evidence: `frontend/src/app/pages/apps`.
-  - Missing: category chips, sort dropdown, install counts/social-proof.
+  - Done: category filter chips and sort dropdown.
+  - Missing: install counts/social-proof.
 
 - [~] **US-46 – Install Modal UI** _(implements US-8 / FR-APP-3, US-22, US-25)_
   - Four-step modal (Configure → Review → Install → Health check), parameter
     validation, SSE live progress, post-install summary + N-ADOPT-1 backup
     commitment checkbox.
   - Evidence: `frontend/src/app/components/install-modal`.
-  - Missing: review step, SSE progress, backup checkbox; health step is
-    synchronous.
+  - Done: review step, N-ADOPT-1 backup checkbox.
+  - Missing: SSE progress; health step is synchronous.
 
 - [~] **US-47 – My Apps Lifecycle UI** _(implements US-9 / FR-UNI-1, US-25)_
   - Status filter chips, app cards with status badge / resource usage /

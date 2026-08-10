@@ -19,7 +19,8 @@ export class InstallModal implements OnInit {
   form = new FormGroup({});
   loading = false;
   error = '';
-  step: 'configure' | 'install' | 'done' = 'configure';
+  backupConfirmed = false;
+  step: 'configure' | 'review' | 'install' | 'done' = 'configure';
   result: { install_id: string; status: string; url: string } | null = null;
 
   ngOnInit() {
@@ -41,8 +42,20 @@ export class InstallModal implements OnInit {
     return 'text';
   }
 
-  install() {
+  displayValue(name: string, kind: string): string {
+    const raw = this.form.get(name)?.value;
+    const value = raw != null ? String(raw) : '';
+    return kind === 'secret' ? '••••' : value;
+  }
+
+  goToReview() {
     if (this.form.invalid) return;
+    this.error = '';
+    this.step = 'review';
+  }
+
+  confirmInstall() {
+    if (!this.backupConfirmed) return;
     this.loading = true;
     this.error = '';
     this.step = 'install';
@@ -60,7 +73,7 @@ export class InstallModal implements OnInit {
       },
       error: (err) => {
         this.loading = false;
-        this.step = 'configure';
+        this.step = 'review';
         this.error = err?.error?.message ?? 'Installation failed';
       },
     });
