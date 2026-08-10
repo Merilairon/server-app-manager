@@ -6,8 +6,27 @@
   } @else if (error) {
     <p class="error">{{ error }}</p>
   } @else {
+    <div class="filters">
+      <div class="category-chips">
+        @for (cat of categories(); track cat) {
+          <button
+            type="button"
+            class="chip"
+            [class.active]="filter() === cat"
+            (click)="setFilter(cat)"
+          >
+            {{ cat }}
+          </button>
+        }
+      </div>
+      <select [value]="sortBy()" (change)="setSort($any($event.target).value)">
+        <option value="name">Sort by name</option>
+        <option value="category">Sort by category</option>
+      </select>
+    </div>
+
     <div class="app-grid">
-      @for (app of apps(); track app.slug) {
+      @for (app of filteredApps(); track app.slug) {
         <div class="app-card">
           <h3>{{ app.name }}</h3>
           <p class="category">{{ app.category ?? 'Other' }}</p>
