@@ -7,15 +7,15 @@
 #
 # All Docker resources are prefixed with the tenant ID via COMPOSE_PROJECT_NAME.
 
-name: ${TENANT_ID:-tenant_default}
+name: ${TENANT_ID:-appforge}
 
 services:
   backend:
     build:
       context: .
       dockerfile: backend/Dockerfile
-    image: ${TENANT_ID:-tenant_default}_backend:latest
-    container_name: ${TENANT_ID:-tenant_default}_backend
+    image: ${TENANT_ID:-appforge}_backend:latest
+    container_name: ${TENANT_ID:-appforge}_backend
     env_file:
       - .env
     environment:
@@ -37,7 +37,7 @@ services:
 
   db:
     image: postgres:17-alpine
-    container_name: ${TENANT_ID:-tenant_default}_db
+    container_name: ${TENANT_ID:-appforge}_db
     environment:
       POSTGRES_USER: sam
       POSTGRES_PASSWORD: sam
@@ -59,7 +59,7 @@ services:
 
   traefik:
     image: traefik:v3.7
-    container_name: ${TENANT_ID:-tenant_default}_traefik
+    container_name: ${TENANT_ID:-appforge}_traefik
     command:
       - "--configFile=/etc/traefik/traefik.yml"
     ports:
@@ -80,16 +80,16 @@ services:
 
 networks:
   backend:
-    name: ${TENANT_ID:-tenant_default}_backend
+    name: ${TENANT_ID:-appforge}_backend
     internal: false
   admin:
-    name: ${TENANT_ID:-tenant_default}_admin
+    name: ${TENANT_ID:-appforge}_admin
     internal: false
 
 volumes:
   app_data:
-    name: ${TENANT_ID:-tenant_default}_app_data
+    name: ${TENANT_ID:-appforge}_app_data
   pg_data:
-    name: ${TENANT_ID:-tenant_default}_pg_data
+    name: ${TENANT_ID:-appforge}_pg_data
   traefik_acme:
-    name: ${TENANT_ID:-tenant_default}_traefik_acme
+    name: ${TENANT_ID:-appforge}_traefik_acme

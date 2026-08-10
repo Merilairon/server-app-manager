@@ -21,8 +21,37 @@ pub enum AppError {
     #[error("not found")]
     NotFound,
 
+    #[error("validation error: {0}")]
+    Validation(String),
+
+    #[error("database error")]
+    Sqlx(#[from] sqlx::Error),
+
+    #[error("bcrypt error")]
+    Bcrypt(#[from] bcrypt::BcryptError),
+
+    #[error("jwt error")]
+    Jwt(#[from] jsonwebtoken::errors::Error),
+
+    #[error("docker error: {0}")]
+    Docker(String),
+
     #[error("internal error: {0}")]
     Internal(String),
+}
+
+impl AppError {
+    pub fn bad_request(msg: impl Into<String>) -> Self {
+        Self::BadRequest(msg.into())
+    }
+
+    pub fn internal(msg: impl Into<String>) -> Self {
+        Self::Internal(msg.into())
+    }
+
+    pub fn docker(msg: impl Into<String>) -> Self {
+        Self::Docker(msg.into())
+    }
 }
 
 impl IntoResponse for AppError {
@@ -33,6 +62,11 @@ impl IntoResponse for AppError {
             AppError::Unauthorized => (StatusCode::UNAUTHORIZED, "unauthorized"),
             AppError::Forbidden => (StatusCode::FORBIDDEN, "forbidden"),
             AppError::NotFound => (StatusCode::NOT_FOUND, "not_found"),
+            AppError::Validation(_) => (StatusCode::BAD_REQUEST, "validation_error"),
+            AppError::Sqlx(_) => (StatusCode::INTERNAL_SERVER_ERROR, "database_error"),
+            AppError::Bcrypt(_) => (StatusCode::INTERNAL_SERVER_ERROR, "hash_error"),
+            AppError::Jwt(_) => (StatusCode::UNAUTHORIZED, "jwt_error"),
+            AppError::Docker(_) => (StatusCode::INTERNAL_SERVER_ERROR, "docker_error"),
             AppError::Internal(_) => (StatusCode::INTERNAL_SERVER_ERROR, "internal_error"),
         };
 

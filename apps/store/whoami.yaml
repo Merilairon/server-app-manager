@@ -1,0 +1,14 @@
+name: Whoami Test
+slug: whoami
+description: A tiny Traefik whoami container for testing sub-domain routing.
+category: Tools
+image: traefik/whoami
+service: whoami
+ports:
+  - container: 80
+healthcheck:
+  test: "wget -qO- http://localhost:80/ || exit 1"
+  interval: 10s
+  timeout: 5s
+  retries: 3
+restart: unless-stopped

@@ -23,7 +23,7 @@ providers:
     watch: true
   docker:
     exposedByDefault: false
-    network: "${TENANT_ID:-tenant_default}_backend"
+    network: "${TENANT_ID:-appforge}_backend"
 
 api:
   dashboard: false

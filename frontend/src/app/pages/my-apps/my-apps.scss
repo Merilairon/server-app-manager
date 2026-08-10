@@ -1,4 +1,4 @@
-.apps-page {
+.my-apps-page {
   padding: 1.5rem;
   color: #e6ecf5;
 }
@@ -21,26 +21,35 @@
   margin: 0 0 0.5rem;
 }
 
-.app-card .category {
-  color: #94a3b8;
-  font-size: 0.75rem;
-  text-transform: uppercase;
-}
-
-.app-card .description {
-  color: #94a3b8;
+.status {
+  color: #22c55e;
   font-size: 0.875rem;
-  min-height: 2.5rem;
 }
 
-.app-card button {
+.actions {
+  display: flex;
+  gap: 0.5rem;
   margin-top: 0.75rem;
-  padding: 0.5rem 1rem;
-  border: none;
+}
+
+.actions a,
+.actions button {
+  padding: 0.4rem 0.75rem;
   border-radius: 4px;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.actions a {
   background: #3b82f6;
   color: white;
-  cursor: pointer;
+}
+
+.actions button {
+  background: #ef4444;
+  color: white;
 }
 
 .loading {

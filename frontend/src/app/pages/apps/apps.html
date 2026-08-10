@@ -1,2 +1,26 @@
-<h1>App Store</h1>
-<p>The app store catalog will be loaded here in a follow-up.</p>
+<div class="apps-page">
+  <h1>App Store</h1>
+
+  @if (loading()) {
+    <p class="loading">Loading catalog…</p>
+  } @else if (error) {
+    <p class="error">{{ error }}</p>
+  } @else {
+    <div class="app-grid">
+      @for (app of apps(); track app.slug) {
+        <div class="app-card">
+          <h3>{{ app.name }}</h3>
+          <p class="category">{{ app.category ?? 'Other' }}</p>
+          <p class="description">{{ app.description ?? '' }}</p>
+          <button (click)="select(app)">Install</button>
+        </div>
+      } @empty {
+        <p>No apps available in the store.</p>
+      }
+    </div>
+  }
+</div>
+
+@if (selected()) {
+  <app-install-modal [app]="selected()!" (close)="selected.set(null)" (done)="onDone()" />
+}

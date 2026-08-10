@@ -1,0 +1,50 @@
+<div class="modal-overlay" (click)="close.emit()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Install {{ app.name }}</h2>
+      <button class="close" (click)="close.emit()" type="button" aria-label="Close">×</button>
+    </div>
+
+    <div class="modal-body">
+      @switch (step) {
+        @case ('configure') {
+          <form [formGroup]="form" (ngSubmit)="install()">
+            @for (p of app.placeholders; track p.name) {
+              <label class="field">
+                {{ p.label ?? p.name }}
+                @if (p.required) {
+                  <span class="required">*</span>
+                }
+                <input [type]="fieldType(p.kind)" [formControlName]="p.name" />
+              </label>
+            } @empty {
+              <p>No configuration required.</p>
+            }
+
+            @if (error) {
+              <p class="error">{{ error }}</p>
+            }
+
+            <div class="modal-actions">
+              <button type="submit" [disabled]="!form.valid || loading">
+                {{ loading ? 'Installing…' : 'Install' }}
+              </button>
+            </div>
+          </form>
+        }
+        @case ('install') {
+          <p>Installing {{ app.name }}…</p>
+        }
+        @case ('done') {
+          @if (result) {
+            <p class="success">{{ app.name }} is {{ result.status }}.</p>
+            <p>
+              <a [href]="result.url" target="_blank">{{ result.url }}</a>
+            </p>
+            <button (click)="done.emit()">Done</button>
+          }
+        }
+      }
+    </div>
+  </div>
+</div>

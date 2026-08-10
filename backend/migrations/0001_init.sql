@@ -28,9 +28,5 @@ VALUES
     ('admin', '["admin:all"]'::jsonb)
 ON CONFLICT (name) DO NOTHING;
 
--- Seed a default admin user with a placeholder bcrypt hash.
--- Replace this hash before any real deployment.
-INSERT INTO users (username, email, password_hash, role)
-VALUES
-    ('admin', 'admin@example.com', '$2b$12$REPLACE_ME_WITH_A_REAL_BCRYPT_HASH', 'admin')
-ON CONFLICT (username) DO NOTHING;
+-- Default admin is created at first startup from ADMIN_USERNAME / ADMIN_PASSWORD.
+-- Do not seed a real password hash here; the backend hashes at runtime.

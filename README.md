@@ -130,7 +130,7 @@ See [`.env.example`](.env.example) for all environment variables:
 
 | Variable          | Default                          | Description                           |
 | ----------------- | -------------------------------- | ------------------------------------- |
-| `TENANT_ID`       | `tenant_default`                 | Prefix for all Docker resources       |
+| `TENANT_ID`       | `appforge`                       | Prefix for all Docker resources       |
 | `DATABASE_URL`    | `postgres://sam:sam@db:5432/sam` | Postgres connection string            |
 | `JWT_SECRET`      | `changeme...`                    | JWT signing secret (override in prod) |
 | `CORS_ORIGIN`     | `https://app.example.com`        | Allowed CORS origin for the SPA       |

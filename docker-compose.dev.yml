@@ -14,14 +14,20 @@
 #   docker compose -f docker-compose.dev.yml --env-file .env.dev up
 #   docker compose -f docker-compose.dev.yml down -v   # wipe dev data
 
-name: ${TENANT_ID:-tenant_default}_dev
+name: ${TENANT_ID:-appforge}_dev
 
 services:
   backend:
     build:
       context: .
       dockerfile: backend/Dockerfile.dev
-    container_name: ${TENANT_ID:-tenant_default}_dev_backend
+    container_name: ${TENANT_ID:-appforge}_dev_backend
+    command:
+      [
+        "/bin/sh",
+        "-c",
+        "find /app/backend/target -mindepth 1 -delete 2>/dev/null || true; exec cargo watch -x run",
+      ]
     env_file:
       - path: .env.dev
         required: false
@@ -64,7 +70,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile.dev
-    container_name: ${TENANT_ID:-tenant_default}_dev_frontend
+    container_name: ${TENANT_ID:-appforge}_dev_frontend
     environment:
       - NODE_ENV=development
     depends_on:
@@ -86,7 +92,7 @@ services:
 
   db:
     image: postgres:17-alpine
-    container_name: ${TENANT_ID:-tenant_default}_dev_db
+    container_name: ${TENANT_ID:-appforge}_dev_db
     environment:
       POSTGRES_USER: sam
       POSTGRES_PASSWORD: sam
@@ -108,13 +114,13 @@ services:
 
 networks:
   dev:
-    name: ${TENANT_ID:-tenant_default}_dev
+    name: ${TENANT_ID:-appforge}_dev
     internal: false
 
 volumes:
   backend_target:
-    name: ${TENANT_ID:-tenant_default}_dev_backend_target
+    name: ${TENANT_ID:-appforge}_dev_backend_target
   cargo_registry:
-    name: ${TENANT_ID:-tenant_default}_dev_cargo_registry
+    name: ${TENANT_ID:-appforge}_dev_cargo_registry
   pg_data_dev:
-    name: ${TENANT_ID:-tenant_default}_dev_pg_data
+    name: ${TENANT_ID:-appforge}_dev_pg_data

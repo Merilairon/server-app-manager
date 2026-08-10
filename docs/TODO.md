@@ -25,75 +25,80 @@ functional story it implements and inherits that story's priority.
     named volumes, tenant prefixing, README commands.
   - Evidence: `backend/Dockerfile`, `docker-compose.yml`, `traefik/`, README.
 
-- [~] **US-16 / FR-AUTH-1 – Authentication & JWT**
+- [x] **US-16 / FR-AUTH-1 – Authentication & JWT**
   - Login page, JWT in HttpOnly cookie, token validation on every request,
     password hashing (bcrypt).
-  - State: crates present (`jsonwebtoken`, `bcrypt`); login endpoint returns
-    `NotImplemented`; frontend login page is a placeholder.
+  - Evidence: `backend/src/auth.rs`, `backend/src/middleware.rs`,
+    `backend/src/routes/auth.rs`, `frontend/src/app/pages/login`.
 
-- [~] **US-11,15 / FR-AUTH-2 – Role-based permissions**
+- [x] **US-11,15 / FR-AUTH-2 – Role-based permissions**
   - Load `roles/roles.yaml` at startup, role-claim enforcement middleware,
     end-user vs admin gating.
-  - State: `roles/roles.yaml` exists; no loader/middleware; route stubs return
-    empty.
+  - Evidence: `backend/src/rbac.rs`, `backend/src/middleware.rs`,
+    `backend/src/routes/apps.rs` `require_permission`.
 
 - [~] **US-7,14 / FR-APP-2 – Configurable YAML app definitions**
   - `apps/store`, `apps/enabled`, `apps/disabled` folders + YAML files,
     catalog loader, placeholder substitution, schema validation against
     `schemas/app-definition.schema.json`.
-  - State: folders exist (empty); schema exists; no loader/YAML files.
+  - Evidence: `backend/src/catalog.rs`, `apps/store/whoami.yaml`.
+  - Missing: JSON-Schema validation; only `serde` deserialization is used.
 
-- [ ] **US-6 / FR-APP-1 – One-click app install**
+- [x] **US-6 / FR-APP-1 – One-click app install**
   - `POST /api/v1/apps/install`, dependency resolution, YAML render,
     `docker compose up`, sub-domain provisioning via Traefik.
-  - State: endpoint stubbed `NotImplemented`.
+  - Evidence: `backend/src/install.rs`, `backend/src/routes/apps.rs`.
 
-- [ ] **US-8 / FR-APP-3 – Install-time parameter prompting**
+- [~] **US-8 / FR-APP-3 – Install-time parameter prompting**
   - Modal form collecting required/optional placeholders, validation, passing
     values to install engine.
-  - State: no install modal in frontend.
+  - Evidence: `frontend/src/app/components/install-modal`.
+  - Missing: review step, SSE progress, N-ADOPT-1 backup checkbox.
 
-- [ ] **US-9 / FR-UNI-1 – Easy uninstall**
+- [x] **US-9 / FR-UNI-1 – Easy uninstall**
   - One-click remove container + volumes + network + DNS cleanup.
-  - State: endpoint stubbed `NotImplemented`.
+  - Evidence: `backend/src/uninstall.rs`, `frontend/src/app/pages/my-apps`.
 
-- [~] **US-28 / FR-NET-1 – Per-app Docker network & ingress**
+- [x] **US-28 / FR-NET-1 – Per-app Docker network & ingress**
   - Each app in own network, backend reachable, Traefik sub-domain router.
-  - State: Traefik dynamic config exists; no per-app network creation logic.
+  - Evidence: `backend/src/install.rs` compose generation with per-app
+    `app_network` and `backend` networks, Traefik router labels.
 
-- [~] **US-5,26,32 / NF-SEC – Security core**
+- [x] **US-5,26,32 / NF-SEC – Security core**
   - JWT validation, CORS, CSRF protection, security headers (CSP,
     X-Frame-Options, HSTS, Referrer-Policy).
-  - State: CORS in `main.rs`; security headers in `traefik/dynamic.yml`; no
-    CSRF; no JWT validation middleware.
+  - Evidence: `backend/src/middleware.rs` (JWT + CSRF),
+    `backend/src/main.rs` `SetResponseHeaderLayer` (CSP, HSTS, etc.).
 
 ### P0 UI – MVP screens (implement P0 features)
 
-- [~] **US-43 – Login Page UI** _(implements US-16 / FR-AUTH-1)_
+- [x] **US-43 – Login Page UI** _(implements US-16 / FR-AUTH-1)_
   - Centered card on gradient backdrop, brand block, server-status badge,
     form submitting to `POST /api/v1/auth/login`, role-based redirect.
-  - State: `pages/login` component exists; template is a placeholder
-    ("Login form will be implemented in a follow-up"); no form, no status
-    badge, no error handling.
+  - Evidence: `frontend/src/app/pages/login/login.{ts,html,scss}`.
+  - Note: functional; server-status badge not yet implemented.
 
 - [~] **US-45 – App Store Catalog UI** _(implements US-6 / FR-APP-1, US-15)_
   - Category filter chips, sort dropdown, responsive `.app-card` grid with
     install counts + social-proof line (N-ADOPT-2), Install action opens
     install modal.
-  - State: `pages/apps` component exists; template is a placeholder; no card
-    grid, no filters, no install action.
+  - Evidence: `frontend/src/app/pages/apps`.
+  - Missing: category chips, sort dropdown, install counts/social-proof.
 
-- [ ] **US-46 – Install Modal UI** _(implements US-8 / FR-APP-3, US-22, US-25)_
+- [~] **US-46 – Install Modal UI** _(implements US-8 / FR-APP-3, US-22, US-25)_
   - Four-step modal (Configure → Review → Install → Health check), parameter
     validation, SSE live progress, post-install summary + N-ADOPT-1 backup
     commitment checkbox.
-  - State: no install modal component.
+  - Evidence: `frontend/src/app/components/install-modal`.
+  - Missing: review step, SSE progress, backup checkbox; health step is
+    synchronous.
 
-- [ ] **US-47 – My Apps Lifecycle UI** _(implements US-9 / FR-UNI-1, US-25)_
+- [~] **US-47 – My Apps Lifecycle UI** _(implements US-9 / FR-UNI-1, US-25)_
   - Status filter chips, app cards with status badge / resource usage /
     lifecycle actions (Open, Pause, Restart, Uninstall), SSE real-time
     status, N-REL-2 dependency-aware uninstall confirmation.
-  - State: no `my-apps` route or component.
+  - Evidence: `frontend/src/app/pages/my-apps`.
+  - Missing: status filters, resource usage, pause/restart, SSE.
 
 ---
 
