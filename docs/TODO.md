@@ -99,7 +99,8 @@ functional story it implements and inherits that story's priority.
     lifecycle actions (Open, Pause, Restart, Uninstall), SSE real-time
     status, N-REL-2 dependency-aware uninstall confirmation.
   - Evidence: `frontend/src/app/pages/my-apps`.
-  - Missing: status filters, resource usage, pause/restart, SSE.
+  - Done: status filter chips.
+  - Missing: resource usage, pause/restart, SSE.
 
 ---
 

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { App, AppsService } from '../../services/apps.service';
 
 @Component({
@@ -13,6 +13,22 @@ export class MyApps implements OnInit {
   apps = signal<App[]>([]);
   loading = signal(true);
   error = '';
+  statusFilter = signal<string>('All');
+
+  statuses = computed(() => {
+    const all = this.apps().map((a) => a.status);
+    const unique = Array.from(new Set(all)).sort();
+    return ['All', ...unique];
+  });
+
+  filteredApps = computed(() => {
+    let list = this.apps();
+    const active = this.statusFilter();
+    if (active !== 'All') {
+      list = list.filter((a) => a.status === active);
+    }
+    return [...list].sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
+  });
 
   ngOnInit() {
     this.load();
@@ -22,7 +38,7 @@ export class MyApps implements OnInit {
     this.loading.set(true);
     this.appsService.list().subscribe({
       next: (res) => {
-        this.apps.set(res.apps.filter((a) => a.status === 'installed'));
+        this.apps.set(res.apps.filter((a) => a.status !== 'available'));
         this.loading.set(false);
       },
       error: (err) => {
@@ -30,6 +46,10 @@ export class MyApps implements OnInit {
         this.error = err?.error?.message ?? 'Failed to load apps';
       },
     });
+  }
+
+  setStatus(status: string) {
+    this.statusFilter.set(status);
   }
 
   uninstall(app: App) {

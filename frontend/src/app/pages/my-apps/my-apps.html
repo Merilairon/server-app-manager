@@ -6,8 +6,21 @@
   } @else if (error) {
     <p class="error">{{ error }}</p>
   } @else {
+    <div class="status-chips">
+      @for (s of statuses(); track s) {
+        <button
+          type="button"
+          class="chip"
+          [class.active]="statusFilter() === s"
+          (click)="setStatus(s)"
+        >
+          {{ s }}
+        </button>
+      }
+    </div>
+
     <div class="app-grid">
-      @for (app of apps(); track app.slug) {
+      @for (app of filteredApps(); track app.slug) {
         <div class="app-card">
           <h3>{{ app.name }}</h3>
           <p class="status">{{ app.status }}</p>
