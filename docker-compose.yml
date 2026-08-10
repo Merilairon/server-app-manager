@@ -58,7 +58,7 @@ services:
       - "traefik.enable=false"
 
   traefik:
-    image: traefik:v3.4
+    image: traefik:v3.7
     container_name: ${TENANT_ID:-tenant_default}_traefik
     command:
       - "--configFile=/etc/traefik/traefik.yml"
