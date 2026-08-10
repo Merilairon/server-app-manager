@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin · Apps — Server App Manager</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="sidebar__brand"><div class="sidebar__logo">S</div>Server App Manager</div>
+      <nav class="sidebar__nav">
+        <h4>General</h4>
+        <a class="nav-link" href="home.html"><span class="ic">📊</span> Dashboard</a>
+        <a class="nav-link" href="apps.html"><span class="ic">🛍️</span> App Store</a>
+        <a class="nav-link" href="my-apps.html"><span class="ic">📦</span> My Apps</a>
+        <a class="nav-link" href="containers.html"><span class="ic">🩺</span> Containers</a>
+        <a class="nav-link" href="launch.html"><span class="ic">🚀</span> Launch</a>
+        <h4>Administration</h4>
+        <a class="nav-link" href="admin-users.html"><span class="ic">👥</span> Users</a>
+        <a class="nav-link active" href="admin-apps.html"><span class="ic">🗂️</span> Apps</a>
+        <a class="nav-link" href="admin-secrets.html"><span class="ic">🗝️</span> Secrets</a>
+        <a class="nav-link" href="admin-backups.html"><span class="ic">💾</span> Backups & Logs</a>
+        <a class="nav-link" href="admin-settings.html"><span class="ic">🛠️</span> Settings</a>
+      </nav>
+      <div class="sidebar__user">
+        <div class="avatar">JD</div>
+        <div><div class="name">Jan Devos</div><div class="role">Administrator</div></div>
+      </div>
+    </aside>
+
+    <div class="main">
+      <div class="topbar">
+        <span class="crumb">Administration</span>
+        <h1>App Management</h1>
+        <div class="spacer"></div>
+        <div class="search"><span class="ic">🔍</span><input placeholder="Search definitions…" /></div>
+        <button class="btn btn--primary btn--sm">+ Upload YAML</button>
+      </div>
+
+      <div class="content content--wide">
+        <div class="tabs">
+          <div class="tab active">Catalog (48)</div>
+          <div class="tab">Enabled (12)</div>
+          <div class="tab">Disabled (3)</div>
+        </div>
+
+        <div class="card">
+          <div class="card__head">
+            <h3>App definitions</h3>
+            <select class="select" style="width:auto"><option>All categories</option><option>Media</option><option>Productivity</option></select>
+          </div>
+          <div class="card__body" style="padding:0">
+            <div class="table-wrap">
+              <table class="tbl">
+                <thead><tr><th>App</th><th>Version</th><th>Category</th><th>State</th><th>Installs</th><th>YAML</th><th></th></tr></thead>
+                <tbody>
+                  <tr>
+                    <td><div class="flex center gap-10"><div class="app-icon" style="width:30px;height:30px;font-size:15px;background:#1d4ed8">☁️</div>Nextcloud</div></td>
+                    <td class="mono">28.0.1</td><td>Productivity</td>
+                    <td><span class="badge badge--ok"><span class="dot"></span>Enabled</span></td>
+                    <td>2.1k</td><td class="mono dim">store/nextcloud.yaml</td>
+                    <td class="right"><button class="btn btn--ghost btn--sm">Edit</button> <button class="btn btn--ghost btn--sm">Disable</button></td>
+                  </tr>
+                  <tr>
+                    <td><div class="flex center gap-10"><div class="app-icon" style="width:30px;height:30px;font-size:15px;background:#b91c1c">🎬</div>Jellyfin</div></td>
+                    <td class="mono">10.8.13</td><td>Media</td>
+                    <td><span class="badge badge--ok"><span class="dot"></span>Enabled</span></td>
+                    <td>1.8k</td><td class="mono dim">store/jellyfin.yaml</td>
+                    <td class="right"><button class="btn btn--ghost btn--sm">Edit</button> <button class="btn btn--ghost btn--sm">Disable</button></td>
+                  </tr>
+                  <tr>
+                    <td><div class="flex center gap-10"><div class="app-icon" style="width:30px;height:30px;font-size:15px;background:#7c3aed">🐙</div>Gitea</div></td>
+                    <td class="mono">1.21.4</td><td>Development</td>
+                    <td><span class="badge badge--ok"><span class="dot"></span>Enabled</span></td>
+                    <td>3.4k</td><td class="mono dim">store/gitea.yaml</td>
+                    <td class="right"><button class="btn btn--ghost btn--sm">Edit</button> <button class="btn btn--ghost btn--sm">Disable</button></td>
+                  </tr>
+                  <tr>
+                    <td><div class="flex center gap-10"><div class="app-icon" style="width:30px;height:30px;font-size:15px;background:#db2777">🔐</div>Vaultwarden</div></td>
+                    <td class="mono">1.30.5</td><td>Security</td>
+                    <td><span class="badge badge--ok"><span class="dot"></span>Enabled</span></td>
+                    <td>2.7k</td><td class="mono dim">store/vaultwarden.yaml</td>
+                    <td class="right"><button class="btn btn--ghost btn--sm">Edit</button> <button class="btn btn--ghost btn--sm">Disable</button></td>
+                  </tr>
+                  <tr style="opacity:0.7">
+                    <td><div class="flex center gap-10"><div class="app-icon" style="width:30px;height:30px;font-size:15px;background:#475569">📊</div>Grafana</div></td>
+                    <td class="mono">10.4.0</td><td>Networking</td>
+                    <td><span class="badge badge--neutral"><span class="dot"></span>Disabled</span></td>
+                    <td>2.9k</td><td class="mono dim">disabled/grafana.yaml</td>
+                    <td class="right"><button class="btn btn--ghost btn--sm">Edit</button> <button class="btn btn--primary btn--sm">Enable</button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- YAML editor preview -->
+        <div class="card mt-24">
+          <div class="card__head">
+            <h3>Editing · store/nextcloud.yaml</h3>
+            <div class="flex gap-8"><span class="badge badge--warn"><span class="dot"></span> Unsaved changes</span></div>
+          </div>
+          <div class="card__body">
+            <div class="log" style="max-height:280px">
+<span class="ts">name:</span> <span class="ok">Nextcloud</span>
+<span class="ts">version:</span> <span class="ok">28.0.1</span>
+<span class="ts">category:</span> productivity
+<span class="ts">image:</span> nextcloud:28
+<span class="ts">subdomain:</span> <span class="info">{{ subdomain }}</span>
+<span class="ts">params:</span>
+  - <span class="info">subdomain</span>     <span class="warn"># required</span>
+  - <span class="info">admin_user</span>    <span class="warn"># required</span>
+  - <span class="info">admin_password</span> <span class="warn"># required, secret</span>
+  - <span class="info">db_type</span>       <span class="warn"># optional, default postgres</span>
+<span class="ts">health:</span> /status.php
+<span class="ts">network:</span> tenant_{{ id }}_net
+            </div>
+          </div>
+          <div class="card__foot">
+            <button class="btn">Discard</button>
+            <button class="btn">Validate schema</button>
+            <button class="btn btn--primary">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

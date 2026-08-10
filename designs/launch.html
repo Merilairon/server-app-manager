@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Launch Container — Server App Manager</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="sidebar__brand"><div class="sidebar__logo">S</div>Server App Manager</div>
+      <nav class="sidebar__nav">
+        <h4>General</h4>
+        <a class="nav-link" href="home.html"><span class="ic">📊</span> Dashboard</a>
+        <a class="nav-link" href="apps.html"><span class="ic">🛍️</span> App Store</a>
+        <a class="nav-link" href="my-apps.html"><span class="ic">📦</span> My Apps</a>
+        <a class="nav-link" href="containers.html"><span class="ic">🩺</span> Containers</a>
+        <a class="nav-link active" href="launch.html"><span class="ic">🚀</span> Launch</a>
+        <h4>Administration</h4>
+        <a class="nav-link" href="admin-users.html"><span class="ic">👥</span> Users</a>
+        <a class="nav-link" href="admin-apps.html"><span class="ic">🗂️</span> Apps</a>
+        <a class="nav-link" href="admin-secrets.html"><span class="ic">🗝️</span> Secrets</a>
+        <a class="nav-link" href="admin-backups.html"><span class="ic">💾</span> Backups & Logs</a>
+        <a class="nav-link" href="admin-settings.html"><span class="ic">🛠️</span> Settings</a>
+      </nav>
+      <div class="sidebar__user">
+        <div class="avatar">JD</div>
+        <div><div class="name">Jan Devos</div><div class="role">Administrator</div></div>
+      </div>
+    </aside>
+
+    <div class="main">
+      <div class="topbar">
+        <span class="crumb">General</span>
+        <h1>Launch Container</h1>
+        <div class="spacer"></div>
+        <a href="containers.html" class="btn btn--ghost btn--sm">← Dashboard</a>
+      </div>
+
+      <div class="content">
+        <div class="grid" style="grid-template-columns:1fr 320px">
+          <!-- Form -->
+          <div class="card">
+            <div class="card__head"><h3>Container configuration</h3><span class="badge badge--accent">Admin only</span></div>
+            <div class="card__body">
+              <div class="field">
+                <label>Docker image <span class="dim">*</span></label>
+                <input class="input input--mono" value="nginx:alpine" placeholder="image:tag or build context" />
+                <div class="hint">Image will be pulled if not present locally.</div>
+              </div>
+
+              <div class="grid grid-2">
+                <div class="field">
+                  <label>Container name</label>
+                  <input class="input input--mono" placeholder="my-container" />
+                </div>
+                <div class="field">
+                  <label>Restart policy</label>
+                  <select class="select">
+                    <option>unless-stopped</option><option>always</option><option>on-failure</option><option>no</option>
+                  </select>
+                </div>
+              </div>
+
+              <p class="section-title">Environment variables</p>
+              <div class="kv-row">
+                <input class="input input--mono" placeholder="KEY" value="TZ" />
+                <input class="input input--mono" placeholder="value" value="Europe/Brussels" />
+                <button class="btn btn--ghost btn--icon">🗑</button>
+              </div>
+              <div class="kv-row">
+                <input class="input input--mono" placeholder="KEY" value="DEBUG" />
+                <input class="input input--mono" placeholder="value" value="true" />
+                <button class="btn btn--ghost btn--icon">🗑</button>
+              </div>
+              <button class="btn btn--ghost btn--sm">+ Add variable</button>
+
+              <p class="section-title mt-16">Port mappings</p>
+              <div class="kv-row" style="grid-template-columns:1fr 1fr auto">
+                <input class="input input--mono" placeholder="host:container" value="8080:80" />
+                <input class="input input--mono" placeholder="protocol" value="tcp" />
+                <button class="btn btn--ghost btn--icon">🗑</button>
+              </div>
+              <button class="btn btn--ghost btn--sm">+ Add mapping</button>
+
+              <p class="section-title mt-16">Command / entrypoint override</p>
+              <div class="field mb-0">
+                <input class="input input--mono" placeholder="e.g. nginx -g 'daemon off;'" />
+                <div class="hint">Optional. Validated for shell syntax before launch.</div>
+              </div>
+            </div>
+            <div class="card__foot">
+              <button class="btn">Reset</button>
+              <button class="btn btn--primary">🚀 Launch container</button>
+            </div>
+          </div>
+
+          <!-- Side panel: validation + preview -->
+          <div class="flex" style="flex-direction:column;gap:18px">
+            <div class="card">
+              <div class="card__head"><h3>Pre-flight checks</h3></div>
+              <div class="card__body">
+                <div class="flex between center mb-8"><span>Image exists / pullable</span><span class="badge badge--ok"><span class="dot"></span>OK</span></div>
+                <div class="flex between center mb-8"><span>Port 8080 free on host</span><span class="badge badge--ok"><span class="dot"></span>OK</span></div>
+                <div class="flex between center mb-8"><span>Sufficient CPU / memory</span><span class="badge badge--ok"><span class="dot"></span>OK</span></div>
+                <div class="flex between center mb-8"><span>Command syntax valid</span><span class="badge badge--ok"><span class="dot"></span>OK</span></div>
+                <div class="flex between center"><span>Network available</span><span class="badge badge--ok"><span class="dot"></span>OK</span></div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card__head"><h3>Compose preview</h3></div>
+              <div class="card__body">
+                <div class="log" style="max-height:240px">
+<span class="ts">services:</span>
+  <span class="info">my-container</span>:
+    image: <span class="ok">nginx:alpine</span>
+    network: <span class="ok">tenant_net</span>
+    restart: <span class="ok">unless-stopped</span>
+    ports:
+      - <span class="ok">"8080:80/tcp"</span>
+    env:
+      TZ: <span class="ok">Europe/Brussels</span>
+      DEBUG: <span class="ok">"true"</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

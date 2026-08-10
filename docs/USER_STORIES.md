@@ -1191,3 +1191,854 @@ As a security analyst, I want security headers (CSP, X‑Frame‑Options, HSTS, 
 - Inline script without nonce → CSP violation → browser blocks script; UI may appear broken.
 - HSTS header sent over HTTP → browsers may reject connection; ensure HSTS only on HTTPS responses.
 - Header size limits (some proxies truncate headers) → verify that full header values are transmitted.
+
+---
+
+# Behavioral Nudge Engine User Stories (US-33 – US-40)
+
+> Derived from `docs/NUDGE_ENGINE.md`. The Behavioral Nudge Engine (BNE) is a
+> lightweight, policy-driven subsystem that steers administrators and end-users
+> toward safer, healthier, and more efficient operations without removing their
+> freedom of choice. Nudge IDs use the `N-<domain>-<n>` convention for
+> traceability into the audit log.
+
+# User Story 33 – Nudge Engine Core Infrastructure
+
+As a platform engineer, I want a backend nudge policy module, a persistent nudge store, an SSE delivery channel, and a frontend `<sam-nudge>` component, so that nudges can be evaluated, stored, delivered, and rendered consistently across the platform.
+
+## Acceptance Criteria
+
+- **Backend policy module** – A `NudgePolicy` module in the Rust/axum backend subscribes to the existing domain event bus (install success, health failure, secret age tick, etc.) and evaluates events against configurable rules.
+- **Rule evaluation** – For each event, `NudgePolicy` checks `NudgeStore` for snooze/opt-out/already-seen state, selects a variant, and emits a nudge DTO.
+- **NudgeStore (Postgres)** – A `nudges` table persists one row per nudge instance with columns: `id` (UUID), `user_id`, `tenant_id`, `nudge_id` (e.g. `N-SEC-1`), `variant`, `trigger_event` (JSONB), `state` (`pending|shown|acted|snoozed|dismissed`), `shown_at`, `acted_at`, `snoozed_until`, `created_at`.
+- **Preferences table** – A `nudge_prefs` table stores per-user opt-out state: `user_id` (PK), `reduce_suggestions` (boolean, default false), `safety_snooze_max_hours` (int, default 72).
+- **SSE delivery** – Nudge DTOs are pushed over the same SSE channel used for live install status (FR-RT-1); a REST fallback (`GET /api/v1/nudges`) returns active nudges on page load.
+- **Frontend NudgeService** – An Angular `NudgeService` consumes the SSE stream with REST fallback, handles deduplication, snooze, and opt-out state.
+- **`<sam-nudge>` component** – Renders in one of three slots: dashboard banner, inline next to the related entity, or transient toast. Uses design-system tokens from `styles.css` (no new visual language).
+- **API surface** – Additive to the existing OpenAPI spec:
+  | Method | Path | Role | Purpose |
+  |--------|------|------|---------|
+  | `GET` | `/api/v1/nudges` | any auth | active nudges for the current user |
+  | `POST` | `/api/v1/nudges/{id}/act` | any auth | record an action outcome |
+  | `POST` | `/api/v1/nudges/{id}/snooze` | any auth | snooze with bounded duration |
+  | `POST` | `/api/v1/nudges/{id}/dismiss` | any auth | dismiss (logged) |
+  | `GET`/`PATCH` | `/api/v1/nudges/prefs` | any auth | read/update opt-out prefs |
+- **Audit integration** – All nudge lifecycle events (trigger, shown, acted, snoozed, dismissed) are written to the same audit log used for admin actions (FR-ADMIN-3).
+- **Tenant scoping** – All endpoints are JWT + tenant-scoped; a user only ever sees their own nudges.
+
+## Technical Constraints & Edge Cases
+
+**Technical Constraints**
+
+- The BNE is **not** a separate service; it is a backend policy module plus a frontend directive that reuses existing SAM infrastructure.
+- `NudgePolicy` rules must be data-driven (editable without redeploy) so that triggers, audiences, and variants can be tuned operationally.
+- The `nudges` and `nudge_prefs` tables must be created via sqlx migrations alongside the existing schema.
+- The SSE channel must be the same one used for FR-RT-1 (live install status); nudges are low-frequency and must not saturate it.
+- `<sam-nudge>` must render exclusively with design-system tokens (`--warn`, `--bad`, `--info`, `--ok`, `--accent`); no new CSS classes outside `styles.css`.
+- All five API endpoints require a valid JWT (HttpOnly cookie) and are audited like other admin actions.
+- The nudge lifecycle is: Trigger → Evaluate → Deliver → Render → Resolve → Measure.
+
+**Edge Cases**
+
+- SSE connection drops mid-stream → `NudgeService` falls back to REST `GET /api/v1/nudges` on reconnect; no nudge is lost.
+- A nudge fires for a user who has opted out of non-safety nudges → `NudgePolicy` suppresses it; safety-critical nudges (N-SEC-3, N-REL-1) bypass the opt-out but respect snooze.
+- Duplicate trigger events arrive in rapid succession → `NudgeStore` deduplicates by `(user_id, nudge_id, trigger_event)` within a cooldown window.
+- `NudgeStore` is unavailable (Postgres down) → nudge evaluation degrades gracefully; no nudge is delivered but domain operations continue unaffected.
+- A nudge references a page or entity that no longer exists (e.g., app was uninstalled) → the nudge is auto-dismissed on next evaluation.
+
+# User Story 34 – Nudge Transparency, Opt-out & Ethical Guardrails
+
+As an end-user or administrator, I want every nudge to be transparent, dismissible, and opt-out-able, with safety-critical nudges remaining snoozable but not permanently hideable, so that I trust the platform is steering me ethically rather than manipulating me.
+
+## Acceptance Criteria
+
+- **"Why am I seeing this?"** – Every rendered `<sam-nudge>` includes a "Why am I seeing this?" affordance that opens a panel explaining the nudge's trigger, the behavioral lever applied, and the policy rule ID.
+- **Opt-out preference** – A per-user "Reduce suggestions" toggle (`nudge_prefs.reduce_suggestions`) disables all non-safety nudges. The toggle is accessible from the user profile or settings page.
+- **Safety snooze cap** – Safety-critical nudges (N-SEC-3, N-REL-1) cannot be permanently dismissed; they can be snoozed for a bounded period up to `safety_snooze_max_hours` (default 72h). After the snooze expires, the nudge re-evaluates.
+- **No dark patterns** – Nudges never hide cheaper or safer options, never use fake urgency (e.g., "only 1 left!"), and never block a legitimate action the user is authorized to perform.
+- **Proportionality** – Nudge intensity (color, placement, persistence) scales with operational risk, not with engagement metrics. A misconfigured nudge cannot become a nag.
+- **Per-user rate cap** – A maximum of N active nudges are shown concurrently per user (configurable, default 3) to prevent nudge fatigue and banner blindness.
+- **Audit trail** – Every nudge shown, acted upon, snoozed, or dismissed is logged with timestamp, user ID, nudge ID, variant, and outcome.
+- **Dismiss + snooze controls** – Each `<sam-nudge>` renders a dismiss (×) and snooze (clock) control alongside the "Why am I seeing this?" link.
+
+## Technical Constraints & Edge Cases
+
+**Technical Constraints**
+
+- The "Why am I seeing this?" panel must reference the nudge's `nudge_id`, the trigger event summary, and a human-readable description of the behavioral lever (from §2.2 of `NUDGE_ENGINE.md`).
+- The `reduce_suggestions` preference must be respected by `NudgePolicy` at evaluation time, not at render time (suppressed nudges are never created).
+- Safety nudges are identified by a `safety: true` flag in the policy rule definition; the snooze cap is enforced server-side via `snoozed_until` validation.
+- The per-user active-nudge cap is enforced by `NudgePolicy` before delivery; excess nudges remain in `pending` state until a slot opens.
+- All four ethical guardrails (transparency, opt-out, no dark patterns, proportionality) must be verifiable via the audit log.
+
+**Edge Cases**
+
+- User toggles "Reduce suggestions" while a non-safety nudge is already shown → the nudge is dismissed immediately and the preference is applied to future evaluations.
+- User attempts to snooze a safety nudge beyond `safety_snooze_max_hours` → the snooze request is clamped to the maximum and the UI informs the user.
+- User dismisses a nudge but the underlying condition persists → the nudge re-evaluates on the next trigger event (dismissal is per-instance, not per-condition).
+- Rate cap is reached and a new safety nudge fires → safety nudges bypass the rate cap; only non-safety nudges are queued.
+- Admin disables a nudge rule via policy edit → all `pending` instances of that nudge are auto-dismissed; `shown` instances remain until resolved.
+
+# User Story 35 – Security Domain Nudges
+
+As an administrator, I want security-focused nudges that remind me to rotate stale secrets, default to least-privilege role assignments, and warn me about backup gaps with loss-framed messaging, so that I close security gaps caused by inattention and status quo bias.
+
+## Acceptance Criteria
+
+- **N-SEC-1 · Secret rotation reminder**:
+  - **Trigger** – A Docker secret's `last_rotated_at` exceeds the policy threshold (default 90 days) or is null.
+  - **Audience** – `admin` users on `admin-secrets.html`.
+  - **Mechanism** – A `--warn` banner appears above the secrets table listing expiring keys with a "Rotate selected" button that pre-fills the rotation modal.
+  - **Lever** – Salience + timely + friction.
+- **N-SEC-2 · Strong-defaults on new role assignment**:
+  - **Trigger** – Admin opens the "Add user" or "Edit role" dialog on `admin-users.html`.
+  - **Mechanism** – The role `<select>` defaults to `user` (least privilege). Helper text shows the permission delta vs. `admin` in plain language (e.g., "Grants read:apps, write:containers — no user or settings management").
+  - **Lever** – Defaults + framing.
+- **N-SEC-3 · Loss-framed backup gap warning**:
+  - **Trigger** – No successful backup in `retention_interval * 1.5` OR a backup failure is logged.
+  - **Audience** – `admin` on the dashboard (`home.html`) and `admin-backups.html`.
+  - **Mechanism** – The dashboard "Last Backup" stat tile flips from `--ok` to `--warn`/`--bad` and the delta line reads "No backup in 6h — 12 apps at risk" instead of the neutral timestamp. A "Back up now" button is rendered inline.
+  - **Lever** – Framing (loss) + salience + timely + friction.
+  - **Safety** – This is a safety-critical nudge: opt-out does not suppress it; snooze is capped at `safety_snooze_max_hours`.
+- **Measurement** – Each nudge records its designated metric:
+  - N-SEC-1: `secret_age_days` p50/p90; rotation events per admin per 30 days.
+  - N-SEC-2: share of new users created with `admin` role; revert events within 24h.
+  - N-SEC-3: `hours_since_last_good_backup` p90; manual backup trigger rate within 1h of warning.
+
+## Technical Constraints & Edge Cases
+
+**Technical Constraints**
+
+- N-SEC-1 requires the `secrets` table to track `last_rotated_at`; the policy threshold is configurable (default 90 days).
+- N-SEC-2 requires the role `<select>` in the "Add user"/"Edit role" dialog to default to `user`; the permission delta text is derived from `roles/roles.yaml`.
+- N-SEC-3 requires the dashboard "Last Backup" `.stat` tile to support dynamic color (`--ok`/`--warn`/`--bad`) and a dynamic delta line with an inline action button.
+- N-SEC-3 is flagged `safety: true` in the policy definition; it bypasses `reduce_suggestions` and enforces the snooze cap.
+- All three nudges are delivered via the SSE channel and rendered through `<sam-nudge>` using existing design-system tokens.
+
+**Edge Cases**
+
+- All secrets are newly created (`last_rotated_at` is null) → N-SEC-1 lists all secrets as expiring; the banner should summarize count rather than list every key if > 10.
+- Admin changes a role from `admin` to `user` (downgrade) → N-SEC-2 does not fire (the nudge is for new assignments and upgrades, not downgrades).
+- Backup is running at the moment the trigger evaluates → N-SEC-3 does not fire if a backup is in progress (state = `running`); it fires only on confirmed gap or failure.
+- No apps are installed → N-SEC-3 delta line reads "No backup in 6h" without the "apps at risk" clause (zero apps).
+- The rotation modal is already open when N-SEC-1 fires → the banner is suppressed to avoid duplicate UI.
+
+# User Story 36 – Reliability Domain Nudges
+
+As an administrator or end-user, I want reliability-focused nudges that help me triage unhealthy containers quickly, confirm destructive uninstalls with dependency context, and set resource limits on launched containers, so that I reduce mean time to remediation and avoid accidental data loss.
+
+## Acceptance Criteria
+
+- **N-REL-1 · Unhealthy container triage nudge**:
+  - **Trigger** – A container's health check fails (FR-CL-2 SSE event).
+  - **Audience** – Any user with `read:containers`; admins get an additional action.
+  - **Mechanism** – The dashboard "Unhealthy" stat tile links directly to a filtered `containers.html?health=unhealthy` view. For admins, a "Restart + recheck" button appears next to the row without leaving the dashboard.
+  - **Lever** – Salience + friction + timely.
+  - **Safety** – Safety-critical nudge; bypasses opt-out, snooze capped.
+  - **Measurement** – `mttr_unhealthy_minutes` p50/p90; restarts issued from dashboard vs. containers page.
+- **N-REL-2 · Dependency-aware uninstall confirmation**:
+  - **Trigger** – User clicks Uninstall on an app with running dependents (FR-UNI-2).
+  - **Mechanism** – The confirmation modal lists dependent containers with their health state and requires a typed confirmation of the app slug (not a generic "Are you sure?"). The dependent list is the salient element; the type-to-confirm is the friction.
+  - **Lever** – Salience + friction + framing (loss of dependents).
+  - **Measurement** – Uninstalls aborted at confirmation; dependents left orphaned (target: 0).
+- **N-REL-3 · Resource-limit suggestion on launch**:
+  - **Trigger** – Admin launches a child container (FR-CL-1) without `mem_limit`/`cpu_quota`.
+  - **Mechanism** – The launch form shows a non-blocking `--info` hint with the host's current free memory and a suggested limit band. The field is pre-filled with the suggestion but editable.
+  - **Lever** – Defaults + social proof (host state) + friction.
+  - **Measurement** – Share of launched containers with explicit limits; OOM events per 100 container-hours.
+
+## Technical Constraints & Edge Cases
+
+**Technical Constraints**
+
+- N-REL-1 requires the dashboard "Unhealthy" `.stat` tile to be a deep link to `containers.html?health=unhealthy`; the containers page must support URL-filtered health state on load.
+- N-REL-1 admin "Restart + recheck" action requires `write:containers` permission; the action calls the existing container restart endpoint and triggers an immediate health re-check.
+- N-REL-2 requires the uninstall modal to query running dependents before rendering; the typed confirmation must match the app slug exactly (case-sensitive).
+- N-REL-3 requires the launch form to query host free memory (via Docker SDK `docker system df` or `inspect`) and pre-fill `mem_limit`/`cpu_quota` fields with a suggested band.
+- N-REL-1 is flagged `safety: true`; N-REL-2 and N-REL-3 are not safety-critical and respect `reduce_suggestions`.
+
+**Edge Cases**
+
+- Multiple containers go unhealthy simultaneously → N-REL-1 fires once with a summary ("3 containers unhealthy"); the deep link filters to all unhealthy.
+- Admin clicks "Restart + recheck" but the container is already restarting → the action is idempotent; no duplicate restart is issued.
+- App has no running dependents → N-REL-2 does not fire; the standard uninstall confirmation (US-9) is shown.
+- User types the app slug with trailing whitespace → confirmation is trimmed before comparison.
+- Host has abundant free memory → N-REL-3 suggestion is conservative (not max); the hint clarifies "suggested baseline, adjust as needed."
+- Admin manually overrides the pre-filled limit to a very high value → N-REL-3 does not warn again (the nudge is a suggestion, not a validation).
+
+# User Story 37 – Adoption Domain Nudges
+
+As an end-user or administrator, I want adoption-focused nudges that encourage me to configure backups after install, surface popular apps via social proof, and notify me when app definitions are stale, so that I get to value faster and keep my apps up to date.
+
+## Acceptance Criteria
+
+- **N-ADOPT-1 · Post-install backup commitment**:
+  - **Trigger** – A successful app install (FR-APP-1 success event).
+  - **Mechanism** – The post-install summary card (FR-APP-3) gains an optional checkbox: "Remind me to configure backups for {{app}} in 24h." If checked, a single timed nudge fires in 24h; if ignored, no nag.
+  - **Lever** – Commitment + timely.
+  - **Measurement** – % of installed apps with a backup within 7 days of install.
+- **N-ADOPT-2 · App store social-proof refinement**:
+  - **Trigger** – Rendering of an `.app-card` on `apps.html`.
+  - **Mechanism** – The existing install count is augmented with a contextual line for apps the user's tenant hasn't installed: "Popular in Media — installed by 8 of 10 tenants." In single-tenant MVP, fall back to global install count + "Recently added" badge.
+  - **Lever** – Social proof.
+  - **Measurement** – Install-through-rate per card; 24h uninstall rate (guardrail — must not increase).
+- **N-ADOPT-3 · Stale app definition update nudge**:
+  - **Trigger** – An enabled app's YAML `version` is older than the store version.
+  - **Audience** – `admin` on `admin-apps.html`.
+  - **Mechanism** – A row-level `--info` badge "Update available" with a one-click "Diff & upgrade" action that opens the YAML editor pre-loaded with the new version and a highlighted diff.
+  - **Lever** – Salience + friction + timely.
+  - **Measurement** – `app_definition_age_days` p50; upgrade actions per week.
+
+## Technical Constraints & Edge Cases
+
+**Technical Constraints**
+
+- N-ADOPT-1 requires the post-install summary card to render an optional checkbox; if checked, `NudgeStore` creates a `pending` nudge with `snoozed_until = now + 24h`. If unchecked, no nudge is created.
+- N-ADOPT-1 fires at most once per install; if the user ignores the 24h nudge, no follow-up nag is sent.
+- N-ADOPT-2 requires the `.app-card` footer to render a contextual social-proof line; in single-tenant MVP, the source is global install counts (not per-tenant).
+- N-ADOPT-2 must not increase the 24h uninstall rate (guardrail from §6.2 of `NUDGE_ENGINE.md`).
+- N-ADOPT-3 requires the `admin-apps.html` table to compare enabled app YAML versions against store versions; the "Diff & upgrade" action opens the YAML editor with a highlighted diff view.
+- All three nudges are non-safety and respect `reduce_suggestions`.
+
+**Edge Cases**
+
+- User installs an app and checks the backup commitment box, then configures backups before 24h → the timed nudge is auto-dismissed when backup configuration is detected.
+- User installs an app and does not check the box → no nudge is ever sent (no nag).
+- Single-tenant deployment with no install history → N-ADOPT-2 falls back to "Recently added" badge only; no fabricated social-proof numbers.
+- App YAML version matches store version → N-ADOPT-3 does not fire; no badge is shown.
+- "Diff & upgrade" is clicked but the new YAML version has breaking schema changes → the editor surfaces a validation warning before save (US-18 schema validation).
+- Multiple apps have updates available → N-ADOPT-3 fires per-row (inline badge), not as a single banner; the rate cap applies to banner-slot nudges only.
+
+# User Story 38 – Hygiene Domain Nudges
+
+As a new tenant or an administrator, I want hygiene-focused nudges that guide me through first-time setup with suggested starter apps and highlight anomalous audit events, so that I reach first value quickly and review high-risk actions promptly.
+
+## Acceptance Criteria
+
+- **N-HYG-1 · Empty-state onboarding nudge**:
+  - **Trigger** – A fresh tenant with zero installed apps opens the dashboard.
+  - **Mechanism** – The "My Apps" preview is replaced with a guided empty state: three suggested starter apps (e.g., a media app, a productivity app, a dev tool) with one-click install and a "Set up nightly backups" secondary CTA.
+  - **Lever** – Defaults + social proof + friction.
+  - **Measurement** – Time-to-first-install; time-to-first-backup-config.
+- **N-HYG-2 · Audit-log anomaly highlight**:
+  - **Trigger** – The recent-activity feed contains a high-risk event (role change, secret rotation, app deletion, failed login burst).
+  - **Mechanism** – The dashboard activity row renders with a `--warn`/`--bad` left border and a "Review" link to the filtered audit view.
+  - **Lever** – Salience + timely.
+  - **Measurement** – Time-from-event-to-review for flagged vs. unflagged events.
+
+## Technical Constraints & Edge Cases
+
+**Technical Constraints**
+
+- N-HYG-1 requires the dashboard to detect a zero-app state (query installed app count on load) and render the guided empty state instead of the "My Apps" table preview.
+- N-HYG-1 suggested starter apps are sourced from the app store catalog with a `starter: true` or `featured: true` flag in the YAML; fallback is the three most-installed apps.
+- N-HYG-1 "Set up nightly backups" CTA links to `admin-settings.html` (or `admin-backups.html`) with a pre-focused backup configuration section.
+- N-HYG-2 requires the recent-activity feed to classify events by risk level; high-risk events are defined as: role change, secret rotation, app deletion, failed login burst (> 5 in 5 min).
+- N-HYG-2 "Review" link deep-links to `admin-backups.html` (audit log tab) filtered by the flagged event type.
+- Both nudges are non-safety and respect `reduce_suggestions`.
+
+**Edge Cases**
+
+- Tenant installs an app then uninstalls it (back to zero) → N-HYG-1 does not re-fire (it is a first-run nudge only; detected via a `first_install_completed` flag in tenant state).
+- No apps in the catalog have `starter: true` → N-HYG-1 falls back to the three most-installed apps globally; if no install history exists, shows three alphabetically first apps.
+- Multiple high-risk events occur in the same activity window → N-HYG-2 highlights each row independently; the rate cap does not apply to inline row highlights.
+- A flagged event is already reviewed (admin clicked through) → the left border is removed on next dashboard load; the "Review" link is replaced with "Reviewed" text.
+- Failed login burst subsides before the admin sees the dashboard → the anomaly remains highlighted until explicitly reviewed or 24h elapses.
+
+# User Story 39 – Nudge Measurement & Do-No-Harm Guardrails
+
+As a platform engineer or product owner, I want per-nudge metrics and automated guardrails that detect when a nudge is causing harm (regret installs, dismissal fatigue, low action rates, audit flooding), so that I can tune or disable underperforming nudges without redeploying.
+
+## Acceptance Criteria
+
+- **Per-nudge metrics** – An offline job rolls up the following metrics per nudge ID, per tenant, on a daily basis:
+  | Domain | Metric | Source |
+  |--------|--------|--------|
+  | Security | `secret_age_days` p50/p90 | `secrets` table |
+  | Security | New users granted `admin` (%) | audit log |
+  | Reliability | `mttr_unhealthy_minutes` p50/p90 | health events |
+  | Reliability | Orphaned dependents post-uninstall | `containers` scan |
+  | Reliability | OOM events / 100 container-hrs | Docker events |
+  | Adoption | Time-to-first-install (new tenant) | install events |
+  | Adoption | Time-to-first-backup-config | backup settings |
+  | Hygiene | Time-from-event-to-review (flagged) | audit view events |
+- **Guardrails (do no harm)**:
+  1. **24h uninstall rate** must not rise with N-ADOPT-2 (social proof must not push regret installs).
+  2. **Dismissal rate** per nudge > 60% over 30 days triggers a policy review (the nudge is likely noise or mistimed).
+  3. **Action rate** per safety nudge < 20% triggers a salience/friction redesign, not a stronger block.
+  4. **Audit log volume** from nudge events is kept < 5% of total to avoid drowning signal.
+- **Alerting** – When a guardrail threshold is breached, a `--warn` alert is surfaced to admins on the dashboard and logged; the nudge rule is not auto-disabled but is flagged for review.
+- **Observability** – Metrics are queryable via an admin endpoint (`GET /api/v1/nudges/metrics`) and visualized on a dedicated metrics view within `admin-settings.html` or `admin-backups.html`.
+
+## Technical Constraints & Edge Cases
+
+**Technical Constraints**
+
+- The offline metrics job runs daily (scheduled task or cron) and writes rollups to a `nudge_metrics` table (or similar) keyed by `(nudge_id, tenant_id, date, metric_name, percentile)`.
+- Guardrail thresholds are configurable in the nudge policy (not hardcoded) so they can be tuned without redeploy.
+- Evaluation is observational first (before/after on the same tenant); A/B is deferred to US-40 (Phase 3).
+- The audit log volume guardrail is measured as a rolling 7-day percentage; nudge events must be tagged with a `source: 'bne'` field for filtering.
+- The metrics endpoint requires `admin` role.
+
+**Edge Cases**
+
+- A nudge is newly deployed and has < 30 days of data → guardrails do not evaluate until the minimum sample window is met (30 days or 100 instances, whichever comes first).
+- A guardrail breach is caused by a one-time anomaly (e.g., a mass secret rotation event) → the alert is surfaced but auto-resolves if the next 7-day window returns to normal.
+- The metrics job fails to run → a `--bad` alert is surfaced to admins; metrics staleness is visible on the metrics view.
+- Audit log volume temporarily spikes due to a burst of nudge events (e.g., multiple unhealthy containers) → the 7-day rolling average smooths the spike; a single day over 5% does not trigger a breach.
+- A nudge is disabled mid-evaluation-window → partial-window data is retained but guardrails are not evaluated for disabled nudges.
+
+# User Story 40 – Nudge A/B Experimentation (Phase 3, Future)
+
+As a product owner, I want to run A/B experiments on nudge variants (copy, placement, lever) gated on the do-no-harm guardrails, so that I can iteratively improve nudge effectiveness where action rates are marginal.
+
+## Acceptance Criteria
+
+- **Variant assignment** – `NudgePolicy` supports multiple variants per nudge ID (labelled A, B, C, …) with configurable traffic allocation percentages per tenant.
+- **Sticky assignment** – A user assigned to a variant stays in that variant for the experiment duration (stored in `nudge_prefs` or a dedicated `nudge_experiments` table).
+- **Guardrail gating** – An experiment cannot be started if any guardrail (US-39) is currently breached for the target nudge. If a guardrail breaches mid-experiment, the experiment auto-pauses and reverts to the control variant.
+- **Metrics per variant** – The metrics job (US-39) rolls up per `(nudge_id, variant)` so action rates, dismissal rates, and guardrail metrics are comparable across variants.
+- **Experiment lifecycle** – An experiment has states: `draft`, `running`, `paused`, `completed`, `reverted`. Only `admin` users can create, start, pause, or stop experiments.
+- **Admin UI** – An "Experiments" tab on `admin-settings.html` lists active and past experiments with variant allocation, action rate, and guardrail status.
+
+## Technical Constraints & Edge Cases
+
+**Technical Constraints**
+
+- This user story is **P3 / Future** (Phase 3 per `NUDGE_ENGINE.md` §7); it is gated on the guardrails and traffic from US-39 (Phase 0–2).
+- Variant assignment must be deterministic per user (hash of `user_id + experiment_id`) to ensure sticky assignment without a lookup on every evaluation.
+- The `nudges` table already has a `variant` column (US-33); experiments populate it with the assigned variant label.
+- Guardrail auto-pause must revert all users to the control variant within one evaluation cycle; no user should see a breached variant after pause.
+- Experiment configuration is data-driven (policy rules, not code paths); an experiment can be created, started, and stopped without redeploy.
+
+**Edge Cases**
+
+- Experiment is started with 50/50 allocation but only 5 users exist → results are not statistically significant; the UI should warn when sample size is below a minimum threshold.
+- A user is assigned to variant B but the experiment is reverted to control → the user's next nudge evaluation uses the control variant; the `variant` column retains "B" for historical rows.
+- Two experiments target the same nudge ID simultaneously → the policy module rejects the second experiment with "A nudge can only be in one active experiment at a time."
+- Guardrail breaches during an experiment but the breach is caused by an external factor (not the variant) → the admin can manually override the auto-pause after review; the override is logged.
+
+---
+
+# UI Design Implementation User Stories (US-41 – US-55)
+
+> Derived from `docs/DESIGN.md` and the mockups in `designs/`. Each story
+> covers the visual/UX implementation of a page or subsystem. Functional
+> behavior is cross-referenced to existing user stories; these stories focus on
+> the UI structure, design-system compliance, and Angular component mapping.
+
+# User Story 41 – Design System Foundation
+
+As a frontend developer, I want a shared design system stylesheet (tokens, typography, and reusable component classes) migrated into the Angular application, so that every page renders with a consistent visual language and new pages can be built from pre-defined primitives.
+
+## Acceptance Criteria
+
+- **Token migration** – All CSS custom properties from `designs/styles.css` are migrated to `frontend/src/styles.scss` as SCSS variables and/or CSS custom properties, including:
+  - Background tokens: `--bg`, `--bg-elev`, `--panel`, `--sidebar`
+  - Border tokens: `--border`, `--border-strong`
+  - Text tokens: `--text`, `--text-muted`, `--text-dim`
+  - Status tokens: `--accent`, `--ok`, `--warn`, `--bad`, `--info` (each with a `*-soft` translucent variant)
+- **Typography** – Font stacks are defined globally:
+  - UI text: `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif`
+  - Monospace: `"SF Mono", "JetBrains Mono", Menlo, Consolas, monospace` (used for container IDs, URLs, YAML, env keys, log output)
+  - Base size: 14px body, 1.5 line-height; headings step down from 16px (topbar) to 11px uppercase section labels.
+- **Reusable components** – The following component classes are implemented as shared Angular components or SCSS mixins under `frontend/src/app/shared/`:
+  - Card (`.card`, `.card__head`, `.card__body`, `.card__foot`)
+  - Stat tile (`.stat`) — label + large value + delta indicator
+  - Button (`.btn`, `.btn--primary`, `.btn--danger`, `.btn--ghost`, `.btn--sm`, `.btn--icon`)
+  - Badge (`.badge`, `.badge--ok/warn/bad/info/neutral/accent`) — status pill with colored dot
+  - Table (`table.tbl`) — sortable-style header, hover row, `.unhealthy` row turns red
+  - Form field (`.field`, `.input`, `.select`, `textarea`)
+  - Key/value row (`.kv-row`) — grid for env var / port mapping entry
+  - App card (`.app-card`) — store tile with icon, name, category, description, footer
+  - Modal (`.modal-overlay`, `.modal`, `.modal__head/body/foot`) — centered dialog with backdrop blur
+  - Progress steps (`.progress`, `.progress__step`) — horizontal step indicator
+  - Progress bar (`.bar`, `.bar__fill`) — linear meter for CPU/mem/disk
+  - Log stream (`.log`) — terminal-style block with colored severity lines
+  - Tabs (`.tabs`, `.tab`) — underline tab navigation
+  - Avatar (`.avatar`) — gradient circle with initials
+- **Design principles** – All pages adhere to the five design principles: operational clarity, density without noise, dark DevOps-native aesthetic, consistent shell, progressive disclosure.
+
+## Technical Constraints & Edge Cases
+
+**Technical Constraints**
+
+- The design system uses a dark theme; all color tokens assume a dark background (`--bg: #0b1020`).
+- Each status color must have a matching `*-soft` translucent variant for badge backgrounds (e.g., `--ok-soft = rgba(34,197,94,0.14)`).
+- Shared components must be standalone Angular components (matching the existing `frontend/` standalone-component convention) under `frontend/src/app/shared/`.
+- The mockups use emoji glyphs as icon placeholders; a real icon set (Material Icons, Lucide, or Heroicons) must be chosen and replaced consistently during implementation.
+- `styles.css` tokens must be migrated to SCSS variables or CSS custom properties, not copied as a raw CSS file.
+
+**Edge Cases**
+
+- A page needs a color or spacing value not defined in the token set → extend the token set in `styles.scss` rather than hardcoding; review with the design system owner.
+- Monospace font is not installed on the user's system → the font stack falls back to `Menlo, Consolas, monospace` gracefully.
+- A reusable component needs a variant not in the mockup (e.g., a warning badge with an icon) → extend the component with a new modifier class following the existing naming convention.
+- WCAG 2.1 AA contrast for `--text-dim` on `--bg` must be verified at implementation; adjust if it fails.
+
+# User Story 42 – Application Shell & Navigation Model
+
+As an end-user or administrator, I want a consistent sidebar + topbar application shell with grouped navigation that mirrors the RBAC structure, so that navigation is predictable across all 12+ pages and admin-only routes are visually separated from general routes.
+
+## Acceptance Criteria
+
+- **Layout shell** – All authenticated pages use a two-column grid:
+  - **Sidebar** (240px, sticky, full-height): brand logo, grouped navigation, and a user card with avatar, name, and role badge.
+  - **Topbar** (56px): breadcrumb, page title, spacer, search input, notifications bell.
+  - **Content** (24px padding, max-width 1280px): pages may opt into `content--wide` to drop the max-width for dense tables and grids.
+- **Navigation groups** – The sidebar groups routes into two sections mirroring `roles/roles.yaml`:
+  - **General** (user + admin): Dashboard, App Store, My Apps, Containers, Launch (admin-only action).
+  - **Administration** (admin-only): Users, Apps, Secrets, Backups & Logs, Settings.
+- **Active state** – The active nav item is highlighted with `--accent` color and a soft accent background.
+- **Login bypass** – The login page (`login.html`) is the only page that bypasses the shell; it uses a centered card on a gradient backdrop.
+- **Angular migration** – The existing Angular app shell (`frontend/src/app/app.html`) currently uses a top-nav bar; it must be replaced with the sidebar layout from the mockups.
+- **Route additions** – The following routes are added to `app.routes.ts` (currently only `''`, `login`, `apps`, `admin` exist): `my-apps`, `containers`, `launch`, and admin children (`admin/users`, `admin/apps`, `admin/secrets`, `admin/backups`, `admin/settings`).
+- **RBAC enforcement** – Admin-only nav items are hidden for non-admin users; navigating to an admin route without permission redirects to the dashboard with an error toast.
+
+## Technical Constraints & Edge Cases
+
+**Technical Constraints**
+
+- The sidebar must be sticky and full-height (`position: sticky; top: 0; height: 100vh`).
+- The topbar is 56px tall with breadcrumb, title, spacer, search, and notifications.
+- The content area defaults to `max-width: 1280px`; the `content--wide` class removes this for dense tables (containers, admin tables).
+- The Angular `App` component (`app.html` / `app.scss`) must be refactored from top-nav to sidebar.
+- Admin routes must be lazy-loaded and guarded by an `AdminGuard` that checks the JWT role claim.
+- The sidebar nav items must be generated from a route configuration object so that RBAC visibility is data-driven.
+
+**Edge Cases**
+
+- Non-admin user navigates directly to `/admin/secrets` → `AdminGuard` redirects to `/` (dashboard) with an "Access denied" toast.
+- Window is resized to a narrow width → the sidebar collapses to icons-only or a hamburger menu (responsive behavior not in mockups; implement per Material/Angular conventions).
+- User has no notifications → the bell icon shows no badge; clicking it opens an empty dropdown with "No new notifications."
+- Search is triggered from the topbar → it searches across apps, containers, and audit log entries; results are shown in a dropdown or dedicated search page.
+- The current Angular app uses a top-nav → the migration to sidebar must not break existing routes (`''`, `login`, `apps`, `admin`).
+
+# User Story 43 – Login Page UI
+
+As an end-user, I want a clean, centered login card on a gradient backdrop with brand identity and a server-status indicator, so that I can authenticate confidently and know the platform is reachable.
+
+## Acceptance Criteria
+
+- **Layout** – Centered card on a blue/purple radial-gradient backdrop; bypasses the application shell.
+- **Brand block** – Logo + tagline at the top of the card.
+- **Form fields** – Username/email input, password input, "Remember me" checkbox, forgot-password link.
+- **Server status** – A "Server online" status badge is rendered on the card.
+- **Footer note** – "Protected by JWT · HttpOnly cookie · RBAC enforced" text below the form.
+- **Submit** – Clicking "Sign in" sends credentials to `POST /api/v1/auth/login`; on success, a JWT is stored in an HttpOnly cookie and the user is redirected based on role (admin → dashboard, user → app store).
+- **Error** – Invalid credentials show a red error banner on the card without clearing the username field.
+
+## Technical Constraints & Edge Cases
+
+**Technical Constraints**
+
+- The login page is the only page that bypasses the sidebar + topbar shell.
+- The form must submit to the existing authentication endpoint (US-16 / FR-AUTH-1).
+- The JWT must be stored in an HttpOnly cookie (not localStorage).
+- The "Server online" badge polls `GET /healthz` on page load; if unreachable, it shows "Server offline" in `--bad`.
+- The card must be vertically and horizontally centered on all viewport sizes.
+
+**Edge Cases**
+
+- Server is unreachable → "Server online" badge shows "Server offline" in `--bad`; the submit button is disabled with a tooltip "Cannot reach server."
+- User enters correct credentials but the JWT cookie is blocked by browser settings → redirect fails; show "Authentication succeeded but session could not be established — check cookie settings."
+- User clicks "Forgot password" → navigates to a password-reset flow (if implemented) or shows a "Contact your administrator" message.
+- "Remember me" is unchecked → the JWT cookie has a session-only lifetime; checking it extends the expiry.
+
+# User Story 44 – Dashboard UI
+
+As an end-user or administrator, I want a dashboard landing page with stat tiles, a My Apps preview, system health bars, and a recent activity feed, so that I can assess platform state at a glance after login.
+
+## Acceptance Criteria
+
+- **Stat tiles** – Four `.stat` tiles across the top: Installed Apps, Healthy Containers, Unhealthy, Last Backup. Each tile shows a large value and a delta indicator.
+- **My Apps preview** – A table preview (app, status, URL, open) with a "View all" link to `my-apps.html`. Replaced by the N-HYG-1 empty state when zero apps are installed.
+- **System Health panel** – CPU, Memory, Disk, Network progress bars (`.bar`, `.bar__fill`) showing current host resource usage.
+- **Recent Activity** – An audit feed (time, user, action, resource, outcome) showing the latest events. High-risk events are highlighted with a `--warn`/`--bad` left border per N-HYG-2.
+- **Nudge integration** – The dashboard renders `<sam-nudge>` banners (N-SEC-3 backup gap, N-REL-1 unhealthy triage) in the banner slot above the stat tiles.
+- **Maps to** – US-3 (health overview), US-21 (last backup), audit logging, US-31 (dashboard entry point).
+
+## Technical Constraints & Edge Cases
+
+**Technical Constraints**
+
+- Stat tiles must support dynamic color: the "Unhealthy" tile turns `--bad` when count > 0; the "Last Backup" tile turns `--warn`/`--bad` per N-SEC-3.
+- The "Unhealthy" stat tile is a deep link to `containers.html?health=unhealthy` (N-REL-1).
+- The "Last Backup" stat tile includes an inline "Back up now" button when N-SEC-3 fires.
+- System Health bars poll host resource usage via `GET /api/v1/system/health` (or equivalent) on load and refresh periodically.
+- The recent-activity feed is sourced from the audit log; high-risk event classification follows N-HYG-2 rules.
+
+**Edge Cases**
+
+- Zero apps installed → "My Apps" preview is replaced by the N-HYG-1 guided empty state with three starter apps and a "Set up nightly backups" CTA.
+- All containers healthy → "Unhealthy" tile shows 0 in `--ok`; no N-REL-1 nudge fires.
+- No backup has ever been taken → "Last Backup" tile shows "Never" in `--bad`; N-SEC-3 fires immediately.
+- System Health data is unavailable (Docker SDK error) → bars show "N/A" in `--text-dim`; no crash.
+- Recent activity feed is empty (fresh install) → show a "No recent activity" placeholder with a link to the app store.
+
+# User Story 45 – App Store Catalog UI
+
+As an end-user, I want to browse a YAML-driven app catalog with category filters, sort options, and install counts on each card, so that I can discover and install apps in one click.
+
+## Acceptance Criteria
+
+- **Category filter chips** – All, Media, Productivity, Development, Security, Networking, Home. Selecting a chip filters the grid.
+- **Sort dropdown** – Sort by popularity (install count), name, recently added.
+- **App card grid** – Responsive auto-fill grid of `.app-card` tiles, each with: icon, name, category, description, rating, install count, and an **Install** button.
+- **Social-proof line** – Each card footer shows a contextual social-proof line per N-ADOPT-2 (e.g., "Popular in Media — installed by 8 of 10 tenants" or "Recently added" in single-tenant MVP).
+- **Install action** – Clicking **Install** opens the install modal (US-46).
+- **Maps to** – US-6 / FR-APP-1 (one-click install), US-15 (secure app browsing), N-ADOPT-2 (social proof).
+
+## Technical Constraints & Edge Cases
+
+**Technical Constraints**
+
+- The app card grid must be responsive (CSS `auto-fill` with `minmax` for card width).
+- Category chips and sort dropdown filter/sort the grid client-side or via query parameters.
+- Install counts are sourced from the backend; in single-tenant MVP, N-ADOPT-2 falls back to global install counts + "Recently added" badge.
+- The `.app-card` component must be a standalone Angular presentational component (`AppCardComponent`) with `@Input()` for app data and `@Output()` for the install event.
+- Emoji icons are placeholders; replace with a real icon set during implementation.
+
+**Edge Cases**
+
+- No apps match the selected category → show an empty state "No apps in this category yet."
+- App catalog fails to load → show an error banner with a "Retry" button.
+- An app is disabled by an admin → it does not appear in the store (only enabled apps are listed).
+- Install count is 0 → the social-proof line is suppressed (no "installed by 0 of 10 tenants").
+- User clicks Install on an app already installed → the button changes to "Installed" with a link to "Open" or "Manage" in My Apps.
+
+# User Story 46 – Install Modal UI
+
+As an end-user, I want a multi-step install modal with parameter configuration, a review step, live install progress, and a post-install summary, so that I can install an app with full visibility into each phase.
+
+## Acceptance Criteria
+
+- **Modal layout** – Modal over a dimmed App Store backdrop with a four-step progress indicator: Configure → Review → Install → Health check.
+- **Configure step** – Required parameters: sub-domain (with `.local` suffix preview), admin username, admin password (marked as Docker secret), database select, storage quota. Optional environment-variable key/value rows (add/remove).
+- **Review step** – Summary of all configured values; pre-install backup confirmation card.
+- **Install step** – Live progress via SSE (FR-RT-1); shows backup → catalog resolve → compose up → health check → audit steps.
+- **Health check step** – Waits up to 2 minutes for the container health check to become healthy; shows a spinner and status.
+- **Post-install summary** – A summary card with configured values (US-8) and the N-ADOPT-1 backup commitment checkbox ("Remind me to configure backups for {{app}} in 24h").
+- **Footer** – Cancel + "Install {{app}} →" button.
+- **Maps to** – US-8 / FR-APP-3 (install-time parameter prompting), US-22 (rollback prerequisite — backup), US-25 / FR-RT-1 (live install status), N-ADOPT-1 (backup commitment).
+
+## Technical Constraints & Edge Cases
+
+**Technical Constraints**
+
+- The modal must use the `.modal-overlay` / `.modal` component from the design system with backdrop blur.
+- The progress indicator uses `.progress` / `.progress__step` (done/active/pending states).
+- Each parameter field must validate (type, regex, length) before allowing advancement to the Review step.
+- The Install step subscribes to the SSE channel for live status; the Health check step polls the container health endpoint.
+- The post-install summary card must render the N-ADOPT-1 checkbox; if checked, a timed nudge is scheduled.
+- The modal must trap focus and be dismissible via Escape or backdrop click (before install starts; not during).
+
+**Edge Cases**
+
+- User clicks Cancel during the Install step → a confirmation warns "Installation in progress — are you sure?" and triggers rollback (US-22) if confirmed.
+- Health check times out after 2 minutes → modal shows "Installation Failed – Rolled back" and the backend removes the container (US-6 rollback flow).
+- A required parameter is left empty → the "Next" button is disabled; the field shows a validation error.
+- Sub-domain is already in use → the Configure step shows an inline error "Sub-domain already taken."
+- SSE connection drops during install → the modal falls back to polling `GET /api/v1/installs/{id}/status` and continues showing progress.
+
+# User Story 47 – My Apps Lifecycle UI
+
+As an end-user, I want a My Apps page showing my installed apps with status badges, resource usage, and lifecycle actions (open, pause, restart, uninstall), so that I can manage my app fleet from one place.
+
+## Acceptance Criteria
+
+- **Status filter chips** – All / Running / Stopped / Unhealthy.
+- **App cards** – Each card shows: status badge, sub-domain, version, CPU/memory usage, and action buttons (Open, Pause, Restart, Uninstall).
+- **Starting state** – A card in "Starting" state shows a "Live status via SSE" note and a Cancel button.
+- **Unhealthy state** – A card in "Unhealthy" state has a red border and a "View logs" button.
+- **Stopped state** – A card in "Stopped" state shows a primary "Start" action.
+- **Uninstall modal** – Clicking Uninstall opens a confirmation modal. For apps with running dependents, the modal lists dependents with health state and requires typed confirmation of the app slug (N-REL-2).
+- **Maps to** – US-9 / FR-UNI-1 (easy uninstall), US-25 (live status), US-3 (per-app health visibility), N-REL-2 (dependency-aware confirmation).
+
+## Technical Constraints & Edge Cases
+
+**Technical Constraints**
+
+- App cards must reflect real-time status via SSE (starting, running, stopped, unhealthy).
+- The "Open" button links to the app's sub-domain URL in a new tab.
+- The Uninstall modal must query running dependents before rendering; if dependents exist, N-REL-2 typed confirmation is required.
+- CPU/memory usage on each card is sourced from the container stats endpoint and refreshes periodically.
+- Status badges use the design-system `.badge` component with appropriate color modifiers (`--ok`, `--warn`, `--bad`, `--info`).
+
+**Edge Cases**
+
+- App is uninstalled from another session → the card disappears on next SSE update; a toast confirms "App uninstalled."
+- User clicks "Pause" on a container that is already stopped → the action is a no-op; the UI shows "Already stopped."
+- Uninstall modal opens but dependents are healthy → N-REL-2 still fires (dependent health state is shown regardless).
+- Sub-domain URL is unreachable (app crashed) → "Open" button links anyway; the unhealthy border and "View logs" guide the user to diagnose.
+- Multiple apps are in "Starting" state simultaneously → each card shows independent SSE status; no card is blocked by another.
+
+# User Story 48 – Container Dashboard UI
+
+As an end-user or administrator, I want a container operations table with health, resource usage, real-time updates, and filtering, so that I can detect and triage container failures quickly.
+
+## Acceptance Criteria
+
+- **Topbar badges** – "Auto-refresh 10s" and "SSE connected" badges in the page topbar.
+- **Stat tiles** – Running / Starting / Unhealthy / Stopped container counts.
+- **Table columns** – Container ID, Image, Status, Health, CPU %, Mem %, Last checked, Logs action.
+- **Unhealthy row highlight** – Rows with Unhealthy health are highlighted red per US-3 acceptance criteria.
+- **Filters** – Search input + status dropdown + "Launch" button (admin-only, links to `launch.html`).
+- **Auto-refresh** – The table auto-refreshes every 10 seconds without losing the current sort/filter state.
+- **Real-time updates** – While the page is open, any change in health/status is reflected instantly via SSE.
+- **URL filtering** – The page supports `?health=unhealthy` query parameter to pre-filter on load (deep-linked from N-REL-1 dashboard tile).
+- **Logs action** – Clicking "Logs" opens a log stream panel for that container.
+- **Maps to** – US-3 / FR-CL-2 (container health dashboard), US-4 / FR-CL-3 (admin container view), US-25 (real-time updates).
+
+## Technical Constraints & Edge Cases
+
+**Technical Constraints**
+
+- The table must use `table.tbl` from the design system with `.unhealthy` row highlighting.
+- Auto-refresh (every 10s) must preserve sort order and filter state (no visual jump).
+- SSE updates must be deduplicated by container ID; only changed rows re-render.
+- The "Launch" button is visible only to admin users (`write:containers` permission).
+- URL query parameter `?health=unhealthy` must pre-set the status dropdown filter on page load.
+- The "Logs" action opens a side panel or modal with the `.log` terminal-style block streaming container logs.
+
+**Edge Cases**
+
+- SSE disconnects → the "SSE connected" badge flips to "Reconnecting…" in `--warn`; the table falls back to 10s polling.
+- No containers exist on the host → the table shows an empty state "No containers running" with a link to the App Store (for end-users) or Launch (for admins).
+- A container is removed between refreshes → its row animates out (or simply disappears on next render); no error.
+- Sort is applied on a column while SSE updates arrive → sort order is maintained; new rows are inserted in the correct position.
+- `?health=unhealthy` is set but no unhealthy containers exist → the table shows an empty filtered state "No unhealthy containers" with a "Clear filter" link.
+
+# User Story 49 – Launch Container Form UI
+
+As an administrator, I want a launch container form with a two-column layout (form + validation/preview side panels), so that I can start arbitrary child containers with full Docker run options and pre-flight validation.
+
+## Acceptance Criteria
+
+- **Two-column layout** – Form on the left; validation and preview side panels on the right.
+- **Form fields** – Image, container name, restart policy, env-var key/value rows, port mappings (host:container + protocol), command/entrypoint override.
+- **Resource-limit suggestion** – When `mem_limit`/`cpu_quota` are empty, a non-blocking `--info` hint shows the host's current free memory and a suggested limit band; the fields are pre-filled but editable (N-REL-3).
+- **Pre-flight checks panel** – Side panel showing real-time validation badges: image pullability, port availability, resource sufficiency, command syntax, network — each with an OK/FAIL badge.
+- **Compose preview panel** – Side panel showing the rendered Docker Compose YAML in a `.log` monospace block.
+- **Launch action** – Clicking "Launch" sends `POST /containers/launch` with the form payload (US-2).
+- **Maps to** – US-2 / FR-CL-1 (launch child containers), US-20 (secret references), US-18 (validation), N-REL-3 (resource-limit suggestion).
+
+## Technical Constraints & Edge Cases
+
+**Technical Constraints**
+
+- The form must use `.field`, `.input`, `.select`, `.kv-row` design-system components.
+- Pre-flight checks run client-side where possible (port format regex) and server-side where Docker SDK is needed (image pullability, resource sufficiency).
+- The Compose preview updates in real-time as the user edits the form (debounced).
+- N-REL-3 hint queries host free memory via `GET /api/v1/system/health` or Docker SDK; the suggestion is a conservative band, not the maximum.
+- The "Launch" button is disabled until all pre-flight checks pass (or warnings are acknowledged).
+
+**Edge Cases**
+
+- Image name is invalid or not pullable → pre-flight "image pullability" badge shows FAIL in `--bad`; the Launch button is disabled.
+- Port is already in use → pre-flight "port availability" badge shows FAIL; the user must change the port or acknowledge.
+- Host has insufficient resources → pre-flight "resource sufficiency" badge shows FAIL; the Launch button is disabled with a message.
+- Command contains shell metacharacters → pre-flight "command syntax" badge shows FAIL; validation rejects before the Docker call.
+- User overrides the N-REL-3 suggested limit to empty → the hint re-appears; the user can launch without limits but the pre-flight shows a `--warn` "No resource limits set."
+- Compose preview YAML has a syntax error → the preview panel shows the error inline; the Launch button is disabled.
+
+# User Story 50 – Admin – Users & Roles UI
+
+As an administrator, I want a user management page with tabs for Users, Roles & permissions, and Audit log, so that I can manage accounts, inspect the permission matrix, and review security-relevant actions.
+
+## Acceptance Criteria
+
+- **Tabs** – Users / Roles & permissions / Audit log.
+- **Users table** – Avatar + name + email, role badge (admin/user), status (Active/Deactivated), last login, created date, Edit action.
+- **Add/Edit user dialog** – Role `<select>` defaults to `user` (least privilege) with helper text showing the permission delta vs. `admin` in plain language (N-SEC-2).
+- **Roles & permissions table** – Reference table mapping permissions (`apps.install`, `apps.uninstall.own/any`, `containers.launch`, `users.manage`, `secrets.manage`, `settings.manage`) to admin vs. user, sourced from `roles/roles.yaml`.
+- **Audit log tab** – Filterable, paginated audit log of all admin actions and nudge events.
+- **Maps to** – US-13 / FR-AUTH-3 (admin user management), US-11/15 / FR-AUTH-2 (role-based permissions), audit logging, N-SEC-2 (strong defaults).
+
+## Technical Constraints & Edge Cases
+
+**Technical Constraints**
+
+- The Users table uses `table.tbl` with avatar (`.avatar`), role badge (`.badge`), and status badge.
+- The Add/Edit user dialog must default the role `<select>` to `user` (N-SEC-2); the permission delta helper text is derived from `roles/roles.yaml`.
+- The Roles & permissions table is read-only ( sourced from `roles/roles.yaml`); editing the YAML is done via `admin-apps.html` or a dedicated roles editor (future).
+- The Audit log tab supports filtering by user, action type, resource, and date range; pagination is server-side.
+- Audit log entries from the BNE are tagged `source: 'bne'` and can be filtered.
+
+**Edge Cases**
+
+- Admin tries to deactivate their own account → the action is blocked with "You cannot deactivate your own account."
+- Admin tries to change their own role from admin to user → the action is blocked with "You cannot remove your own admin privileges."
+- `roles/roles.yaml` is missing or invalid → the Roles & permissions table shows an error "Could not load roles configuration."
+- Audit log has > 10,000 entries → server-side pagination with a "Load more" button; no client-side rendering of all rows.
+- A user has never logged in → "Last login" shows "Never" in `--text-dim`.
+
+# User Story 51 – Admin – Apps & YAML Editor UI
+
+As an administrator, I want an app definition management page with tabs for Catalog, Enabled, and Disabled apps, plus an inline YAML editor with schema validation, so that I can enable, disable, delete, and edit app definitions.
+
+## Acceptance Criteria
+
+- **Tabs** – Catalog (count) / Enabled (count) / Disabled (count).
+- **Apps table** – App icon + name, version, category, state badge, install count, YAML path, Edit/Disable (or Enable) actions.
+- **Stale version badge** – When an enabled app's YAML version is older than the store version, a row-level `--info` "Update available" badge appears with a one-click "Diff & upgrade" action (N-ADOPT-3).
+- **YAML editor card** – Shows the app's YAML (e.g., `store/nextcloud.yaml`) with syntax-highlighted placeholders (`{{ subdomain }}`), param annotations, and an "Unsaved changes" badge.
+- **Editor actions** – Discard, Validate schema, Save.
+- **Schema validation** – Clicking "Validate schema" runs the YAML against the JSON schema (US-7); errors are listed inline.
+- **Diff & upgrade** – Clicking "Diff & upgrade" (N-ADOPT-3) opens the editor pre-loaded with the new version and a highlighted diff.
+- **Maps to** – US-12 / FR-ADMIN-1 (admin app management), US-7/14 / FR-APP-2 (YAML definitions), US-18 (schema validation), N-ADOPT-3 (stale definition nudge).
+
+## Technical Constraints & Edge Cases
+
+**Technical Constraints**
+
+- The YAML editor must render in a monospace `.log`-style block with syntax highlighting for YAML and placeholder tokens.
+- "Unsaved changes" badge (`.badge--warn`) appears when the editor content diverges from the saved file.
+- "Validate schema" calls the backend schema validation endpoint (US-18); errors are mapped to line numbers in the editor.
+- "Diff & upgrade" loads the store version of the YAML and renders a highlighted diff (additions in `--ok`, removals in `--bad`).
+- The table uses `table.tbl` with state badges (`.badge--ok` for enabled, `.badge--neutral` for disabled).
+- Tab counts are dynamic, sourced from the backend.
+
+**Edge Cases**
+
+- YAML has a syntax error → "Validate schema" returns parsing errors with line numbers; "Save" is disabled.
+- Admin edits the YAML and navigates away without saving → a "You have unsaved changes" confirmation dialog appears.
+- "Diff & upgrade" is clicked but the new version has breaking schema changes → the editor surfaces a validation warning before save.
+- An app is currently installed and the admin disables it → a confirmation warns "X instances are running — they will be stopped"; confirming triggers the disable + stop flow.
+- YAML file is not found on disk → the editor shows "File not found" in `--bad`; Save is disabled.
+
+# User Story 52 – Admin – Secrets Management UI
+
+As an administrator, I want a Docker secrets CRUD page with a hard rule that secret values are never exposed after creation, so that I can manage sensitive credentials securely.
+
+## Acceptance Criteria
+
+- **Warning banner** – A persistent warning banner at the top: "Secret values are never exposed; rotate to set a new value."
+- **Secrets table** – Name (mono), scope badge, used-by count, created date, last rotated date, Rotate + Delete actions.
+- **Rotation reminder banner** – When one or more secrets exceed the rotation threshold (default 90 days) or have `last_rotated_at = null`, a `--warn` banner appears above the table listing expiring keys with a "Rotate selected" button (N-SEC-1).
+- **New secret modal** – Name, scope select, value textarea with a hint that it is encrypted at rest and unretrievable.
+- **Rotate action** – Clicking "Rotate" opens a modal to set a new value; the old value is permanently replaced.
+- **Delete action** – Clicking "Delete" requires typed confirmation of the secret name; deletion is logged in the audit log.
+- **Maps to** – US-20 / FR-ADMIN-2 (Docker secrets management), NF-SEC, N-SEC-1 (rotation reminder).
+
+## Technical Constraints & Edge Cases
+
+**Technical Constraints**
+
+- Secret values must never be returned by any API endpoint after creation; only metadata (name, scope, created, last_rotated, used-by) is shown.
+- The secrets table uses `table.tbl` with monospace name column and `.badge` for scope.
+- N-SEC-1 banner is rendered via `<sam-nudge>` in the banner slot above the table; it lists expiring keys and includes a "Rotate selected" button that pre-fills the rotation modal.
+- The "New secret" modal uses `.modal` with a textarea for the value; the value is encrypted at rest.
+- Delete confirmation requires exact typed match of the secret name (case-sensitive).
+- All actions (create, rotate, delete) are logged in the audit log.
+
+**Edge Cases**
+
+- Admin tries to retrieve a secret value → the API returns 403 "Secret values are not retrievable"; the UI never offers a "view value" action.
+- Secret is referenced by a running container and admin deletes it → a warning lists the containers using it; deletion requires explicit confirmation "X containers are using this secret."
+- All secrets are within the rotation threshold → N-SEC-1 banner is not shown.
+- Secret name contains special characters → the typed delete confirmation must match exactly, including special characters.
+- `last_rotated_at` is null (secret never rotated) → N-SEC-1 lists it as expiring regardless of created date.
+
+# User Story 53 – Admin – Backups & Logs UI
+
+As an administrator, I want a backups and logs page with tabs for Backups, Audit log, and Live logs, so that I can inspect backup history, review audit events, and tail live platform logs in real time.
+
+## Acceptance Criteria
+
+- **Tabs** – Backups / Audit log / Live logs.
+- **Stat tiles** – Total backups, Success rate, Next nightly (time in UTC).
+- **Backup history table** – Timestamp, type (Full / Pre-install), trigger, size, status badge, Restore + Download actions. Header notes retention (e.g., 14 days) and disk usage (e.g., 142 GB).
+- **Audit log tab** – Filterable, paginated audit log (same data as US-50 audit tab, with additional backup-specific filters).
+- **Live log stream** – Terminal-style `.log` block with timestamped, severity-colored lines (INFO/OK/WARN/ERROR) showing real-time platform activity (install flows, backup events, health checks, audit events).
+- **Restore action** – Clicking "Restore" on a backup row opens a confirmation modal; restoring triggers the rollback flow (US-22).
+- **Download action** – Clicking "Download" downloads the backup archive.
+- **Maps to** – US-21 / FR-ADMIN-3 (backup & log settings), US-29 (log streaming), US-22 (pre-install backup evidence), audit logging.
+
+## Technical Constraints & Edge Cases
+
+**Technical Constraints**
+
+- The live log stream uses the `.log` component with `aria-live="polite"` for accessibility.
+- Log lines are color-coded by severity: INFO in `--text-muted`, OK in `--ok`, WARN in `--warn`, ERROR in `--bad`.
+- The live log stream connects via SSE; on disconnect, it shows "Stream paused — reconnecting…" and resumes automatically.
+- The backup history table uses `table.tbl` with `.badge` for status (Success = `--ok`, Failed = `--bad`, In progress = `--warn`).
+- Restore confirmation modal warns about data overwrite; typed confirmation of the backup timestamp may be required for full restores.
+- Download action streams the backup file from the backend; large files show a progress indicator.
+
+**Edge Cases**
+
+- No backups exist → the table shows an empty state "No backups yet" with a "Back up now" button.
+- Live log stream produces output faster than the UI can render → lines are buffered and throttled; a "Showing last N lines" indicator appears.
+- Backup restore fails (corrupt archive) → the confirmation modal shows an error; the audit log records the failed restore attempt.
+- Disk usage exceeds retention capacity → a `--warn` banner appears "Backup disk almost full — review retention settings" with a link to admin settings.
+- SSE disconnects during live log streaming → the stream pauses and resumes on reconnect; no log lines are lost (backend buffers).
+
+# User Story 54 – Admin – Settings UI
+
+As an administrator, I want a global settings page with tabs for General, SSL/TLS, Backups, Rate limiting, and Security, so that I can configure all platform-wide operational parameters in one place.
+
+## Acceptance Criteria
+
+- **Tabs** – General / SSL / TLS / Backups / Rate limiting / Security.
+- **General tab** – Platform name, base domain, default language (English / Nederlands per US-31 i18n).
+- **SSL / TLS tab** – Certificate mode (Let's Encrypt / custom / self-signed), ACME email, DNS challenge provider, custom cert upload. "ACME active" badge when Let's Encrypt is enabled.
+- **Backups tab** – Nightly time (UTC), retention days, backup path, pre-install snapshot toggle.
+- **Rate limiting tab** – Installs/user/hour, installs/app/hour, login attempts/5 min, API requests/min.
+- **Security tab** – Grid showing CSP, X-Frame-Options, HSTS, Referrer-Policy, CORS (all On) and CSRF (Off, with an "Enable CSRF" button). Security headers cannot be turned off via this UI (US-32).
+- **Save behavior** – Each tab has independent Save/Discard; unsaved changes show a `.badge--warn` "Unsaved changes" indicator.
+- **Maps to** – US-24 / FR-SSL-1 (SSL management), US-21 / FR-ADMIN-3 (backup schedule), US-25 / FR-RT-2 (rate limiting), US-5/26/32 / NF-SEC (security headers), US-31 / NF-A11Y (i18n).
+
+## Technical Constraints & Edge Cases
+
+**Technical Constraints**
+
+- Each tab is a routed child or a tabbed view within the Admin Settings component.
+- Settings are persisted via `PATCH /api/v1/admin/settings` (or per-section endpoints); all changes are audited.
+- The SSL/TLS tab must support three modes: Let's Encrypt (ACME), custom cert upload, and self-signed.
+- Rate limiting fields must validate numeric ranges (e.g., installs/user/hour > 0).
+- The Security tab is read-only for header status (headers are enforced by middleware, US-32); the only actionable control is the CSRF toggle.
+- Language selection (General tab) sets the `@ngx-translate` default language (en/nl per US-31).
+
+**Edge Cases**
+
+- Admin switches SSL mode from Let's Encrypt to custom → a warning appears "Existing ACME certificates will not be renewed"; confirming triggers the switch.
+- Custom cert upload fails (invalid format) → the upload shows an error "Invalid certificate format"; the mode is not changed.
+- Retention days is set to 0 → validation rejects with "Retention must be at least 1 day."
+- Admin navigates between tabs with unsaved changes → a "You have unsaved changes" confirmation appears.
+- CSRF is toggled from Off to On → a warning explains that all state-changing requests will require CSRF tokens; the Angular HTTP interceptor must be updated accordingly.
+- Rate limit value exceeds a safe maximum → validation warns "This value may allow abuse — are you sure?" but does not block.
+
+# User Story 55 – Design Accessibility & i18n Compliance
+
+As an accessibility-conscious developer, I want all design mockup pages implemented with WCAG 2.1 AA compliance, ARIA roles, visible focus styles, and full string translation, so that the platform is usable by everyone and ready for internationalization.
+
+## Acceptance Criteria
+
+- **ARIA roles** – The sidebar is marked `role="navigation"`; tabs use `tablist`/`tab`/`tabpanel`; modals use `role="dialog"` with `aria-modal="true"` and a focus trap.
+- **Live regions** – The live log stream and SSE status badges use `aria-live="polite"` so screen readers announce updates.
+- **Focus styles** – Visible `:focus` box-shadows are applied to all interactive elements (inputs, buttons, links, nav items), extending the existing input focus styles from the design system.
+- **Color contrast** – All text/background pairs meet WCAG 2.1 AA contrast. The `--text-dim` on `--bg` pair must be verified at implementation and adjusted if it fails.
+- **Keyboard navigation** – All interactive elements are reachable via Tab; modals trap focus; Escape closes modals; Enter activates buttons and links.
+- **Translation** – All visible strings are translated via `@ngx-translate` with `en` and `nl` locales configured (per US-31). No hardcoded user-facing strings in components.
+- **Empty/loading/error states** – Implementation includes skeleton loaders, empty-state illustrations, and error banners consistent with the design system (not in scope for the mockups but required for production).
+
+## Technical Constraints & Edge Cases
+
+**Technical Constraints**
+
+- ARIA roles must be applied at the Angular component template level, not via runtime DOM manipulation.
+- The focus trap in modals must cycle focus within the modal while open and restore focus to the triggering element on close.
+- `@ngx-translate` is already configured in the frontend (per US-31); all new components must use translation keys, not inline strings.
+- Skeleton loaders must match the layout of the loaded content (same dimensions) to prevent layout shift.
+- Error banners must use the `.badge--bad` / `--bad` color tokens and be announced via `aria-live="assertive"`.
+- WCAG 2.1 AA contrast must be verified with an automated tool (e.g., axe-core) in CI.
+
+**Edge Cases**
+
+- Screen reader user navigates the container dashboard table → table headers must use `<th scope="col">` for proper column association.
+- Keyboard user tabs through the app card grid → each card is a single tab stop with internal actions accessible via Enter/Space.
+- Modal is opened and user presses Tab past the last focusable element → focus wraps to the first focusable element (focus trap).
+- Translation key is missing for `nl` locale → the translation service falls back to `en` and logs a warning.
+- Skeleton loader is shown for > 3 seconds → a "Taking longer than expected…" message appears below the skeleton.
+- Automated contrast check fails for `--text-dim` on `--bg` → the token value is adjusted (lightened) until AA passes; the change is documented in the design system.

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin · Backups & Logs — Server App Manager</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="sidebar__brand"><div class="sidebar__logo">S</div>Server App Manager</div>
+      <nav class="sidebar__nav">
+        <h4>General</h4>
+        <a class="nav-link" href="home.html"><span class="ic">📊</span> Dashboard</a>
+        <a class="nav-link" href="apps.html"><span class="ic">🛍️</span> App Store</a>
+        <a class="nav-link" href="my-apps.html"><span class="ic">📦</span> My Apps</a>
+        <a class="nav-link" href="containers.html"><span class="ic">🩺</span> Containers</a>
+        <a class="nav-link" href="launch.html"><span class="ic">🚀</span> Launch</a>
+        <h4>Administration</h4>
+        <a class="nav-link" href="admin-users.html"><span class="ic">👥</span> Users</a>
+        <a class="nav-link" href="admin-apps.html"><span class="ic">🗂️</span> Apps</a>
+        <a class="nav-link" href="admin-secrets.html"><span class="ic">🗝️</span> Secrets</a>
+        <a class="nav-link active" href="admin-backups.html"><span class="ic">💾</span> Backups & Logs</a>
+        <a class="nav-link" href="admin-settings.html"><span class="ic">🛠️</span> Settings</a>
+      </nav>
+      <div class="sidebar__user">
+        <div class="avatar">JD</div>
+        <div><div class="name">Jan Devos</div><div class="role">Administrator</div></div>
+      </div>
+    </aside>
+
+    <div class="main">
+      <div class="topbar">
+        <span class="crumb">Administration</span>
+        <h1>Backups & Logs</h1>
+        <div class="spacer"></div>
+        <button class="btn btn--primary btn--sm">⬇ Backup now</button>
+      </div>
+
+      <div class="content content--wide">
+        <div class="tabs">
+          <div class="tab active">Backups</div>
+          <div class="tab">Audit log</div>
+          <div class="tab">Live logs</div>
+        </div>
+
+        <div class="grid grid-3 mb-24">
+          <div class="stat"><span class="ic">💾</span><div class="stat__label">Total backups</div><div class="stat__value">42</div></div>
+          <div class="stat"><span class="ic">✅</span><div class="stat__label">Success rate</div><div class="stat__value">100%</div></div>
+          <div class="stat"><span class="ic">🕓</span><div class="stat__label">Next nightly</div><div class="stat__value">02:00</div></div>
+        </div>
+
+        <div class="card mb-24">
+          <div class="card__head"><h3>Backup history</h3><span class="dim" style="font-size:12px">Retention: 14 days · 142 GB used</span></div>
+          <div class="card__body" style="padding:0">
+            <div class="table-wrap">
+              <table class="tbl">
+                <thead><tr><th>Timestamp</th><th>Type</th><th>Trigger</th><th>Size</th><th>Status</th><th></th></tr></thead>
+                <tbody>
+                  <tr><td class="mono">2026-08-10 02:00</td><td>Full</td><td>nightly</td><td>3.2 GB</td><td><span class="badge badge--ok"><span class="dot"></span>Success</span></td><td class="right"><button class="btn btn--ghost btn--sm">Restore</button> <button class="btn btn--ghost btn--sm">Download</button></td></tr>
+                  <tr><td class="mono">2026-08-09 08:14</td><td>Pre-install</td><td>jan (gitea)</td><td>3.1 GB</td><td><span class="badge badge--ok"><span class="dot"></span>Success</span></td><td class="right"><button class="btn btn--ghost btn--sm">Restore</button> <button class="btn btn--ghost btn--sm">Download</button></td></tr>
+                  <tr><td class="mono">2026-08-09 02:00</td><td>Full</td><td>nightly</td><td>3.1 GB</td><td><span class="badge badge--ok"><span class="dot"></span>Success</span></td><td class="right"><button class="btn btn--ghost btn--sm">Restore</button> <button class="btn btn--ghost btn--sm">Download</button></td></tr>
+                  <tr><td class="mono">2026-08-08 02:00</td><td>Full</td><td>nightly</td><td>3.0 GB</td><td><span class="badge badge--ok"><span class="dot"></span>Success</span></td><td class="right"><button class="btn btn--ghost btn--sm">Restore</button> <button class="btn btn--ghost btn--sm">Download</button></td></tr>
+                  <tr><td class="mono">2026-08-07 02:00</td><td>Full</td><td>nightly</td><td>3.0 GB</td><td><span class="badge badge--ok"><span class="dot"></span>Success</span></td><td class="right"><button class="btn btn--ghost btn--sm">Restore</button> <button class="btn btn--ghost btn--sm">Download</button></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card__head">
+            <h3>Live log stream</h3>
+            <div class="flex gap-8">
+              <select class="select" style="width:auto"><option>All services</option><option>backend</option><option>traefik</option></select>
+              <span class="badge badge--info"><span class="dot"></span> Streaming</span>
+            </div>
+          </div>
+          <div class="card__body">
+            <div class="log">
+<span class="ts">08:14:22</span> <span class="info">[INFO]</span>  backend: install request app=gitea user=jan
+<span class="ts">08:14:23</span> <span class="ok">[OK]</span>    backup: pre-install snapshot saved (3.1 GB)
+<span class="ts">08:14:24</span> <span class="info">[INFO]</span>  catalog: resolved dependencies for gitea → [postgres]
+<span class="ts">08:14:25</span> <span class="info">[INFO]</span>  docker: compose up -d gitea postgres
+<span class="ts">08:14:31</span> <span class="ok">[OK]</span>    docker: container gitea started (id=a1b2c3d4)
+<span class="ts">08:14:31</span> <span class="info">[INFO]</span>  traefik: router git.local → gitea:3000
+<span class="ts">08:14:40</span> <span class="warn">[WARN]</span>  health: gitea /healthz timeout (attempt 1/5)
+<span class="ts">08:14:50</span> <span class="ok">[OK]</span>    health: gitea healthy
+<span class="ts">08:14:50</span> <span class="ok">[OK]</span>    audit: install success resource=gitea user=jan
+<span class="ts">06:55:10</span> <span class="err">[ERROR]</span> health: vaultwarden check failed — connection timeout
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

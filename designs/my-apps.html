@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Apps — Server App Manager</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="sidebar__brand"><div class="sidebar__logo">S</div>Server App Manager</div>
+      <nav class="sidebar__nav">
+        <h4>General</h4>
+        <a class="nav-link" href="home.html"><span class="ic">📊</span> Dashboard</a>
+        <a class="nav-link" href="apps.html"><span class="ic">🛍️</span> App Store</a>
+        <a class="nav-link active" href="my-apps.html"><span class="ic">📦</span> My Apps</a>
+        <a class="nav-link" href="containers.html"><span class="ic">🩺</span> Containers</a>
+        <a class="nav-link" href="launch.html"><span class="ic">🚀</span> Launch</a>
+        <h4>Administration</h4>
+        <a class="nav-link" href="admin-users.html"><span class="ic">👥</span> Users</a>
+        <a class="nav-link" href="admin-apps.html"><span class="ic">🗂️</span> Apps</a>
+        <a class="nav-link" href="admin-secrets.html"><span class="ic">🗝️</span> Secrets</a>
+        <a class="nav-link" href="admin-backups.html"><span class="ic">💾</span> Backups & Logs</a>
+        <a class="nav-link" href="admin-settings.html"><span class="ic">🛠️</span> Settings</a>
+      </nav>
+      <div class="sidebar__user">
+        <div class="avatar">JD</div>
+        <div><div class="name">Jan Devos</div><div class="role">Administrator</div></div>
+      </div>
+    </aside>
+
+    <div class="main">
+      <div class="topbar">
+        <span class="crumb">General</span>
+        <h1>My Apps</h1>
+        <div class="spacer"></div>
+        <a href="apps.html" class="btn btn--primary btn--sm">+ Browse store</a>
+        <button class="btn btn--ghost btn--icon">🔔</button>
+      </div>
+
+      <div class="content content--wide">
+        <div class="flex gap-8 mb-24" style="flex-wrap:wrap">
+          <button class="btn btn--sm btn--primary">All (12)</button>
+          <button class="btn btn--sm">Running (10)</button>
+          <button class="btn btn--sm">Stopped (1)</button>
+          <button class="btn btn--sm">Unhealthy (1)</button>
+        </div>
+
+        <div class="grid grid-auto">
+          <div class="app-card">
+            <div class="app-card__top">
+              <div class="app-icon" style="background:#1d4ed8">☁️</div>
+              <div style="flex:1">
+                <div class="flex between"><div class="app-card__name">Nextcloud</div><span class="badge badge--ok"><span class="dot"></span>Running</span></div>
+                <div class="app-card__cat mono">cloud.local</div>
+              </div>
+            </div>
+            <div class="app-card__desc">v28.0.1 · installed 12 days ago · CPU 12% · 480 MB</div>
+            <div class="app-card__foot">
+              <a href="#" class="btn btn--sm">Open ↗</a>
+              <div class="flex gap-8">
+                <button class="btn btn--ghost btn--sm">⏸</button>
+                <button class="btn btn--ghost btn--sm">Restart</button>
+                <button class="btn btn--danger btn--sm">Uninstall</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="app-card">
+            <div class="app-card__top">
+              <div class="app-icon" style="background:#b91c1c">🎬</div>
+              <div style="flex:1">
+                <div class="flex between"><div class="app-card__name">Jellyfin</div><span class="badge badge--ok"><span class="dot"></span>Running</span></div>
+                <div class="app-card__cat mono">media.local</div>
+              </div>
+            </div>
+            <div class="app-card__desc">v10.8.13 · installed 30 days ago · CPU 4% · 612 MB</div>
+            <div class="app-card__foot">
+              <a href="#" class="btn btn--sm">Open ↗</a>
+              <div class="flex gap-8">
+                <button class="btn btn--ghost btn--sm">⏸</button>
+                <button class="btn btn--ghost btn--sm">Restart</button>
+                <button class="btn btn--danger btn--sm">Uninstall</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="app-card" style="border-color:var(--warn)">
+            <div class="app-card__top">
+              <div class="app-icon" style="background:#7c3aed">🐙</div>
+              <div style="flex:1">
+                <div class="flex between"><div class="app-card__name">Gitea</div><span class="badge badge--warn"><span class="dot"></span>Starting</span></div>
+                <div class="app-card__cat mono">git.local</div>
+              </div>
+            </div>
+            <div class="app-card__desc">v1.21.4 · installing… health check in progress</div>
+            <div class="app-card__foot">
+              <span class="dim" style="font-size:11.5px">Live status via SSE</span>
+              <button class="btn btn--danger btn--sm">Cancel</button>
+            </div>
+          </div>
+
+          <div class="app-card" style="border-color:var(--bad)">
+            <div class="app-card__top">
+              <div class="app-icon" style="background:#db2777">🔐</div>
+              <div style="flex:1">
+                <div class="flex between"><div class="app-card__name">Vaultwarden</div><span class="badge badge--bad"><span class="dot"></span>Unhealthy</span></div>
+                <div class="app-card__cat mono">vault.local</div>
+              </div>
+            </div>
+            <div class="app-card__desc">v1.30.5 · health check failed — connection timeout</div>
+            <div class="app-card__foot">
+              <button class="btn btn--sm">View logs</button>
+              <div class="flex gap-8">
+                <button class="btn btn--ghost btn--sm">Restart</button>
+                <button class="btn btn--danger btn--sm">Uninstall</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="app-card">
+            <div class="app-card__top">
+              <div class="app-icon" style="background:#0891b2">📖</div>
+              <div style="flex:1">
+                <div class="flex between"><div class="app-card__name">Calibre-Web</div><span class="badge badge--ok"><span class="dot"></span>Running</span></div>
+                <div class="app-card__cat mono">books.local</div>
+              </div>
+            </div>
+            <div class="app-card__desc">v0.6.21 · installed 5 days ago · CPU 1% · 88 MB</div>
+            <div class="app-card__foot">
+              <a href="#" class="btn btn--sm">Open ↗</a>
+              <div class="flex gap-8">
+                <button class="btn btn--ghost btn--sm">⏸</button>
+                <button class="btn btn--ghost btn--sm">Restart</button>
+                <button class="btn btn--danger btn--sm">Uninstall</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="app-card" style="opacity:0.7">
+            <div class="app-card__top">
+              <div class="app-icon" style="background:#475569">📊</div>
+              <div style="flex:1">
+                <div class="flex between"><div class="app-card__name">Grafana</div><span class="badge badge--neutral"><span class="dot"></span>Stopped</span></div>
+                <div class="app-card__cat mono">grafana.local</div>
+              </div>
+            </div>
+            <div class="app-card__desc">v10.4.0 · stopped 2 days ago</div>
+            <div class="app-card__foot">
+              <button class="btn btn--primary btn--sm">▶ Start</button>
+              <button class="btn btn--danger btn--sm">Uninstall</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

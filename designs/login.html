@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login — Server App Manager</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="login-bg">
+    <div class="login-card">
+      <div class="login-card__brand">
+        <div class="logo">S</div>
+        <div>
+          <h1>Server App Manager</h1>
+          <p>Sign in to manage your self-hosted apps</p>
+        </div>
+      </div>
+
+      <form onsubmit="return false">
+        <div class="field">
+          <label for="user">Username or email</label>
+          <input class="input" id="user" type="text" placeholder="admin@example.com" autocomplete="username" />
+        </div>
+
+        <div class="field">
+          <label for="pass">Password</label>
+          <input class="input" id="pass" type="password" placeholder="••••••••••" autocomplete="current-password" />
+          <div class="hint"><a href="#">Forgot password?</a></div>
+        </div>
+
+        <div class="flex between center mb-16">
+          <label class="flex center gap-8" style="font-size:13px;color:var(--text-muted);cursor:pointer">
+            <input type="checkbox" /> Remember me
+          </label>
+          <span class="badge badge--neutral"><span class="dot"></span> Server online</span>
+        </div>
+
+        <button class="btn btn--primary" style="width:100%;justify-content:center">Sign in →</button>
+      </form>
+
+      <div style="margin-top:22px;padding-top:18px;border-top:1px solid var(--border);font-size:12px;color:var(--text-dim);text-align:center">
+        Protected by JWT · HttpOnly cookie · RBAC enforced
+      </div>
+    </div>
+  </div>
+</body>
+</html>

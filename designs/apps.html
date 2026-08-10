@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>App Store — Server App Manager</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="sidebar__brand"><div class="sidebar__logo">S</div>Server App Manager</div>
+      <nav class="sidebar__nav">
+        <h4>General</h4>
+        <a class="nav-link" href="home.html"><span class="ic">📊</span> Dashboard</a>
+        <a class="nav-link active" href="apps.html"><span class="ic">🛍️</span> App Store</a>
+        <a class="nav-link" href="my-apps.html"><span class="ic">📦</span> My Apps</a>
+        <a class="nav-link" href="containers.html"><span class="ic">🩺</span> Containers</a>
+        <a class="nav-link" href="launch.html"><span class="ic">🚀</span> Launch</a>
+        <h4>Administration</h4>
+        <a class="nav-link" href="admin-users.html"><span class="ic">👥</span> Users</a>
+        <a class="nav-link" href="admin-apps.html"><span class="ic">🗂️</span> Apps</a>
+        <a class="nav-link" href="admin-secrets.html"><span class="ic">🗝️</span> Secrets</a>
+        <a class="nav-link" href="admin-backups.html"><span class="ic">💾</span> Backups & Logs</a>
+        <a class="nav-link" href="admin-settings.html"><span class="ic">🛠️</span> Settings</a>
+      </nav>
+      <div class="sidebar__user">
+        <div class="avatar">JD</div>
+        <div><div class="name">Jan Devos</div><div class="role">Administrator</div></div>
+      </div>
+    </aside>
+
+    <div class="main">
+      <div class="topbar">
+        <span class="crumb">General</span>
+        <h1>App Store</h1>
+        <div class="spacer"></div>
+        <div class="search"><span class="ic">🔍</span><input placeholder="Search 48 apps…" /></div>
+        <button class="btn btn--ghost btn--icon">🔔</button>
+      </div>
+
+      <div class="content content--wide">
+        <!-- Filters -->
+        <div class="flex between center mb-24" style="flex-wrap:wrap;gap:12px">
+          <div class="flex gap-8" style="flex-wrap:wrap">
+            <button class="btn btn--sm btn--primary">All</button>
+            <button class="btn btn--sm">Media</button>
+            <button class="btn btn--sm">Productivity</button>
+            <button class="btn btn--sm">Development</button>
+            <button class="btn btn--sm">Security</button>
+            <button class="btn btn--sm">Networking</button>
+            <button class="btn btn--sm">Home</button>
+          </div>
+          <div class="flex gap-8">
+            <select class="select" style="width:auto"><option>Sort: Popular</option><option>Name A–Z</option><option>Recently added</option></select>
+          </div>
+        </div>
+
+        <!-- Catalog grid -->
+        <div class="grid grid-auto">
+          <div class="app-card">
+            <div class="app-card__top">
+              <div class="app-icon" style="background:#1d4ed8">☁️</div>
+              <div><div class="app-card__name">Nextcloud</div><div class="app-card__cat">Productivity · Storage</div></div>
+            </div>
+            <div class="app-card__desc">Self-hosted file sync & share platform with calendars, contacts and office docs.</div>
+            <div class="app-card__foot">
+              <div class="app-card__meta"><span>★ 4.8</span><span>· 2.1k installs</span></div>
+              <a href="install-modal.html" class="btn btn--primary btn--sm">Install</a>
+            </div>
+          </div>
+
+          <div class="app-card">
+            <div class="app-card__top">
+              <div class="app-icon" style="background:#b91c1c">🎬</div>
+              <div><div class="app-card__name">Jellyfin</div><div class="app-card__cat">Media · Streaming</div></div>
+            </div>
+            <div class="app-card__desc">Free, open-source media server for streaming your movies, shows and music.</div>
+            <div class="app-card__foot">
+              <div class="app-card__meta"><span>★ 4.7</span><span>· 1.8k installs</span></div>
+              <a href="install-modal.html" class="btn btn--primary btn--sm">Install</a>
+            </div>
+          </div>
+
+          <div class="app-card">
+            <div class="app-card__top">
+              <div class="app-icon" style="background:#7c3aed">🐙</div>
+              <div><div class="app-card__name">Gitea</div><div class="app-card__cat">Development · Git</div></div>
+            </div>
+            <div class="app-card__desc">Lightweight, self-hosted Git service with issues, PRs and CI actions.</div>
+            <div class="app-card__foot">
+              <div class="app-card__meta"><span>★ 4.9</span><span>· 3.4k installs</span></div>
+              <a href="install-modal.html" class="btn btn--primary btn--sm">Install</a>
+            </div>
+          </div>
+
+          <div class="app-card">
+            <div class="app-card__top">
+              <div class="app-icon" style="background:#db2777">🔐</div>
+              <div><div class="app-card__name">Vaultwarden</div><div class="app-card__cat">Security · Passwords</div></div>
+            </div>
+            <div class="app-card__desc">Unofficial Bitwarden-compatible server. Manage passwords and 2FA securely.</div>
+            <div class="app-card__foot">
+              <div class="app-card__meta"><span>★ 4.8</span><span>· 2.7k installs</span></div>
+              <a href="install-modal.html" class="btn btn--primary btn--sm">Install</a>
+            </div>
+          </div>
+
+          <div class="app-card">
+            <div class="app-card__top">
+              <div class="app-icon" style="background:#0891b2">📖</div>
+              <div><div class="app-card__name">Calibre-Web</div><div class="app-card__cat">Media · eBooks</div></div>
+            </div>
+            <div class="app-card__desc">Browse, read and download your eBook library from any device.</div>
+            <div class="app-card__foot">
+              <div class="app-card__meta"><span>★ 4.6</span><span>· 980 installs</span></div>
+              <a href="install-modal.html" class="btn btn--primary btn--sm">Install</a>
+            </div>
+          </div>
+
+          <div class="app-card">
+            <div class="app-card__top">
+              <div class="app-icon" style="background:#16a34a">🏠</div>
+              <div><div class="app-card__name">Home Assistant</div><div class="app-card__cat">Home · Automation</div></div>
+            </div>
+            <div class="app-card__desc">Open-source home automation platform with thousands of integrations.</div>
+            <div class="app-card__foot">
+              <div class="app-card__meta"><span>★ 4.7</span><span>· 1.5k installs</span></div>
+              <a href="install-modal.html" class="btn btn--primary btn--sm">Install</a>
+            </div>
+          </div>
+
+          <div class="app-card">
+            <div class="app-card__top">
+              <div class="app-icon" style="background:#ea580c">🎧</div>
+              <div><div class="app-card__name">Navidrome</div><div class="app-card__cat">Media · Music</div></div>
+            </div>
+            <div class="app-card__desc">Modern music server and streamer, Subsonic-compatible.</div>
+            <div class="app-card__foot">
+              <div class="app-card__meta"><span>★ 4.5</span><span>· 640 installs</span></div>
+              <a href="install-modal.html" class="btn btn--primary btn--sm">Install</a>
+            </div>
+          </div>
+
+          <div class="app-card">
+            <div class="app-card__top">
+              <div class="app-icon" style="background:#475569">📊</div>
+              <div><div class="app-card__name">Grafana</div><div class="app-card__cat">Networking · Monitoring</div></div>
+            </div>
+            <div class="app-card__desc">Query, visualize and alert on metrics from any data source.</div>
+            <div class="app-card__foot">
+              <div class="app-card__meta"><span>★ 4.9</span><span>· 2.9k installs</span></div>
+              <a href="install-modal.html" class="btn btn--primary btn--sm">Install</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Container Dashboard — Server App Manager</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="sidebar__brand"><div class="sidebar__logo">S</div>Server App Manager</div>
+      <nav class="sidebar__nav">
+        <h4>General</h4>
+        <a class="nav-link" href="home.html"><span class="ic">📊</span> Dashboard</a>
+        <a class="nav-link" href="apps.html"><span class="ic">🛍️</span> App Store</a>
+        <a class="nav-link" href="my-apps.html"><span class="ic">📦</span> My Apps</a>
+        <a class="nav-link active" href="containers.html"><span class="ic">🩺</span> Containers</a>
+        <a class="nav-link" href="launch.html"><span class="ic">🚀</span> Launch</a>
+        <h4>Administration</h4>
+        <a class="nav-link" href="admin-users.html"><span class="ic">👥</span> Users</a>
+        <a class="nav-link" href="admin-apps.html"><span class="ic">🗂️</span> Apps</a>
+        <a class="nav-link" href="admin-secrets.html"><span class="ic">🗝️</span> Secrets</a>
+        <a class="nav-link" href="admin-backups.html"><span class="ic">💾</span> Backups & Logs</a>
+        <a class="nav-link" href="admin-settings.html"><span class="ic">🛠️</span> Settings</a>
+      </nav>
+      <div class="sidebar__user">
+        <div class="avatar">JD</div>
+        <div><div class="name">Jan Devos</div><div class="role">Administrator</div></div>
+      </div>
+    </aside>
+
+    <div class="main">
+      <div class="topbar">
+        <span class="crumb">General</span>
+        <h1>Container Dashboard</h1>
+        <div class="spacer"></div>
+        <span class="badge badge--ok"><span class="dot"></span> Auto-refresh 10s</span>
+        <span class="badge badge--info"><span class="dot"></span> SSE connected</span>
+        <button class="btn btn--ghost btn--icon">🔔</button>
+      </div>
+
+      <div class="content content--wide">
+        <div class="grid grid-4 mb-24">
+          <div class="stat"><span class="ic">🟢</span><div class="stat__label">Running</div><div class="stat__value">14</div></div>
+          <div class="stat"><span class="ic">🟡</span><div class="stat__label">Starting</div><div class="stat__value">1</div></div>
+          <div class="stat"><span class="ic">🔴</span><div class="stat__label">Unhealthy</div><div class="stat__value">1</div></div>
+          <div class="stat"><span class="ic">⏸</span><div class="stat__label">Stopped</div><div class="stat__value">2</div></div>
+        </div>
+
+        <div class="card">
+          <div class="card__head">
+            <h3>All Containers</h3>
+            <div class="flex gap-8">
+              <div class="search" style="margin-right:6px"><span class="ic">🔍</span><input placeholder="Filter…" style="width:180px" /></div>
+              <select class="select" style="width:auto"><option>All statuses</option><option>Running</option><option>Unhealthy</option></select>
+              <a href="launch.html" class="btn btn--primary btn--sm">+ Launch</a>
+            </div>
+          </div>
+          <div class="card__body" style="padding:0">
+            <div class="table-wrap">
+              <table class="tbl">
+                <thead>
+                  <tr>
+                    <th>Container ID</th><th>Image</th><th>Status</th><th>Health</th>
+                    <th>CPU %</th><th>Mem %</th><th>Last checked</th><th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="mono">a1b2c3d4</td><td>nextcloud:28</td>
+                    <td><span class="badge badge--ok"><span class="dot"></span>Running</span></td>
+                    <td><span class="badge badge--ok"><span class="dot"></span>Healthy</span></td>
+                    <td>12.4%</td><td>38%</td><td class="mono">08:14:20</td>
+                    <td><button class="btn btn--ghost btn--sm">Logs</button></td>
+                  </tr>
+                  <tr>
+                    <td class="mono">e5f6g7h8</td><td>jellyfin/jellyfin:10.8</td>
+                    <td><span class="badge badge--ok"><span class="dot"></span>Running</span></td>
+                    <td><span class="badge badge--ok"><span class="dot"></span>Healthy</span></td>
+                    <td>4.1%</td><td>22%</td><td class="mono">08:14:20</td>
+                    <td><button class="btn btn--ghost btn--sm">Logs</button></td>
+                  </tr>
+                  <tr>
+                    <td class="mono">i9j0k1l2</td><td>gitea/gitea:1.21</td>
+                    <td><span class="badge badge--ok"><span class="dot"></span>Running</span></td>
+                    <td><span class="badge badge--warn"><span class="dot"></span>Starting</span></td>
+                    <td>2.0%</td><td>9%</td><td class="mono">08:14:20</td>
+                    <td><button class="btn btn--ghost btn--sm">Logs</button></td>
+                  </tr>
+                  <tr class="unhealthy">
+                    <td class="mono">m3n4o5p6</td><td>vaultwarden/server:1.30</td>
+                    <td><span class="badge badge--ok"><span class="dot"></span>Running</span></td>
+                    <td><span class="badge badge--bad"><span class="dot"></span>Unhealthy</span></td>
+                    <td>0.3%</td><td>14%</td><td class="mono">08:14:18</td>
+                    <td><button class="btn btn--ghost btn--sm">Logs</button></td>
+                  </tr>
+                  <tr>
+                    <td class="mono">q7r8s9t0</td><td>linuxserver/calibre-web:0.6</td>
+                    <td><span class="badge badge--ok"><span class="dot"></span>Running</span></td>
+                    <td><span class="badge badge--ok"><span class="dot"></span>Healthy</span></td>
+                    <td>0.8%</td><td>5%</td><td class="mono">08:14:20</td>
+                    <td><button class="btn btn--ghost btn--sm">Logs</button></td>
+                  </tr>
+                  <tr>
+                    <td class="mono">u1v2w3x4</td><td>grafana/grafana:10.4</td>
+                    <td><span class="badge badge--neutral"><span class="dot"></span>Stopped</span></td>
+                    <td><span class="badge badge--neutral"><span class="dot"></span>—</span></td>
+                    <td>—</td><td>—</td><td class="mono">2d ago</td>
+                    <td><button class="btn btn--primary btn--sm">▶ Start</button></td>
+                  </tr>
+                  <tr>
+                    <td class="mono">y5z6a7b8</td><td>postgres:16-alpine</td>
+                    <td><span class="badge badge--ok"><span class="dot"></span>Running</span></td>
+                    <td><span class="badge badge--ok"><span class="dot"></span>Healthy</span></td>
+                    <td>1.2%</td><td>18%</td><td class="mono">08:14:20</td>
+                    <td><button class="btn btn--ghost btn--sm">Logs</button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

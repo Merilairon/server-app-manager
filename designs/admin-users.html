@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin · Users — Server App Manager</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="sidebar__brand"><div class="sidebar__logo">S</div>Server App Manager</div>
+      <nav class="sidebar__nav">
+        <h4>General</h4>
+        <a class="nav-link" href="home.html"><span class="ic">📊</span> Dashboard</a>
+        <a class="nav-link" href="apps.html"><span class="ic">🛍️</span> App Store</a>
+        <a class="nav-link" href="my-apps.html"><span class="ic">📦</span> My Apps</a>
+        <a class="nav-link" href="containers.html"><span class="ic">🩺</span> Containers</a>
+        <a class="nav-link" href="launch.html"><span class="ic">🚀</span> Launch</a>
+        <h4>Administration</h4>
+        <a class="nav-link active" href="admin-users.html"><span class="ic">👥</span> Users</a>
+        <a class="nav-link" href="admin-apps.html"><span class="ic">🗂️</span> Apps</a>
+        <a class="nav-link" href="admin-secrets.html"><span class="ic">🗝️</span> Secrets</a>
+        <a class="nav-link" href="admin-backups.html"><span class="ic">💾</span> Backups & Logs</a>
+        <a class="nav-link" href="admin-settings.html"><span class="ic">🛠️</span> Settings</a>
+      </nav>
+      <div class="sidebar__user">
+        <div class="avatar">JD</div>
+        <div><div class="name">Jan Devos</div><div class="role">Administrator</div></div>
+      </div>
+    </aside>
+
+    <div class="main">
+      <div class="topbar">
+        <span class="crumb">Administration</span>
+        <h1>Users</h1>
+        <div class="spacer"></div>
+        <div class="search"><span class="ic">🔍</span><input placeholder="Search users…" /></div>
+        <button class="btn btn--primary btn--sm">+ New user</button>
+      </div>
+
+      <div class="content content--wide">
+        <div class="tabs">
+          <div class="tab active">Users</div>
+          <div class="tab">Roles & permissions</div>
+          <div class="tab">Audit log</div>
+        </div>
+
+        <div class="card">
+          <div class="card__head">
+            <h3>3 users · 1 admin · 2 active</h3>
+            <select class="select" style="width:auto"><option>All roles</option><option>admin</option><option>user</option></select>
+          </div>
+          <div class="card__body" style="padding:0">
+            <div class="table-wrap">
+              <table class="tbl">
+                <thead><tr><th>User</th><th>Role</th><th>Status</th><th>Last login</th><th>Created</th><th></th></tr></thead>
+                <tbody>
+                  <tr>
+                    <td><div class="flex center gap-12"><div class="avatar" style="width:30px;height:30px;font-size:12px">JD</div><div><div style="font-weight:600">Jan Devos</div><div class="dim mono" style="font-size:11px">jan@local</div></div></div></td>
+                    <td><span class="badge badge--accent">admin</span></td>
+                    <td><span class="badge badge--ok"><span class="dot"></span>Active</span></td>
+                    <td class="mono">08:02 today</td><td class="mono">2026-01-04</td>
+                    <td class="right"><button class="btn btn--ghost btn--sm">Edit</button></td>
+                  </tr>
+                  <tr>
+                    <td><div class="flex center gap-12"><div class="avatar" style="width:30px;height:30px;font-size:12px;background:linear-gradient(135deg,#0ea5e9,#22c55e)">MV</div><div><div style="font-weight:600">Marie Vermeulen</div><div class="dim mono" style="font-size:11px">marie@local</div></div></div></td>
+                    <td><span class="badge badge--neutral">user</span></td>
+                    <td><span class="badge badge--ok"><span class="dot"></span>Active</span></td>
+                    <td class="mono">yesterday</td><td class="mono">2026-02-18</td>
+                    <td class="right"><button class="btn btn--ghost btn--sm">Edit</button></td>
+                  </tr>
+                  <tr>
+                    <td><div class="flex center gap-12"><div class="avatar" style="width:30px;height:30px;font-size:12px;background:linear-gradient(135deg,#f59e0b,#ef4444)">TD</div><div><div style="font-weight:600">Tom De Smet</div><div class="dim mono" style="font-size:11px">tom@local</div></div></div></td>
+                    <td><span class="badge badge--neutral">user</span></td>
+                    <td><span class="badge badge--neutral"><span class="dot"></span>Deactivated</span></td>
+                    <td class="dim mono">—</td><td class="mono">2026-03-02</td>
+                    <td class="right"><button class="btn btn--ghost btn--sm">Edit</button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Roles reference -->
+        <div class="card mt-24">
+          <div class="card__head"><h3>Roles & permissions</h3><span class="dim" style="font-size:12px">Loaded from roles/roles.yaml</span></div>
+          <div class="card__body" style="padding:0">
+            <div class="table-wrap">
+              <table class="tbl">
+                <thead><tr><th>Permission</th><th>admin</th><th>user</th></tr></thead>
+                <tbody>
+                  <tr><td>apps.install</td><td>✅</td><td>✅</td></tr>
+                  <tr><td>apps.uninstall.own</td><td>✅</td><td>✅</td></tr>
+                  <tr><td>apps.uninstall.any</td><td>✅</td><td>—</td></tr>
+                  <tr><td>containers.launch</td><td>✅</td><td>—</td></tr>
+                  <tr><td>users.manage</td><td>✅</td><td>—</td></tr>
+                  <tr><td>secrets.manage</td><td>✅</td><td>—</td></tr>
+                  <tr><td>settings.manage</td><td>✅</td><td>—</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — Server App Manager</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="shell">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar__brand">
+        <div class="sidebar__logo">S</div>
+        Server App Manager
+      </div>
+      <nav class="sidebar__nav">
+        <h4>General</h4>
+        <a class="nav-link active" href="home.html"><span class="ic">📊</span> Dashboard</a>
+        <a class="nav-link" href="apps.html"><span class="ic">🛍️</span> App Store</a>
+        <a class="nav-link" href="my-apps.html"><span class="ic">📦</span> My Apps</a>
+        <a class="nav-link" href="containers.html"><span class="ic">🩺</span> Containers</a>
+        <a class="nav-link" href="launch.html"><span class="ic">🚀</span> Launch</a>
+        <h4>Administration</h4>
+        <a class="nav-link" href="admin-users.html"><span class="ic">👥</span> Users</a>
+        <a class="nav-link" href="admin-apps.html"><span class="ic">🗂️</span> Apps</a>
+        <a class="nav-link" href="admin-secrets.html"><span class="ic">🗝️</span> Secrets</a>
+        <a class="nav-link" href="admin-backups.html"><span class="ic">💾</span> Backups & Logs</a>
+        <a class="nav-link" href="admin-settings.html"><span class="ic">🛠️</span> Settings</a>
+      </nav>
+      <div class="sidebar__user">
+        <div class="avatar">JD</div>
+        <div>
+          <div class="name">Jan Devos</div>
+          <div class="role">Administrator</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <div class="main">
+      <div class="topbar">
+        <span class="crumb">Overview</span>
+        <h1>Dashboard</h1>
+        <div class="spacer"></div>
+        <div class="search"><span class="ic">🔍</span><input placeholder="Search apps, containers…" /></div>
+        <button class="btn btn--ghost btn--icon">🔔</button>
+      </div>
+
+      <div class="content">
+        <!-- Stat tiles -->
+        <div class="grid grid-4 mb-24">
+          <div class="stat">
+            <span class="ic">📦</span>
+            <div class="stat__label">Installed Apps</div>
+            <div class="stat__value">12</div>
+            <div class="stat__delta up">+2 this week</div>
+          </div>
+          <div class="stat">
+            <span class="ic">🟢</span>
+            <div class="stat__label">Healthy Containers</div>
+            <div class="stat__value">14</div>
+            <div class="stat__delta up">All passing</div>
+          </div>
+          <div class="stat">
+            <span class="ic">🩹</span>
+            <div class="stat__label">Unhealthy</div>
+            <div class="stat__value">1</div>
+            <div class="stat__delta down">Needs attention</div>
+          </div>
+          <div class="stat">
+            <span class="ic">💾</span>
+            <div class="stat__label">Last Backup</div>
+            <div class="stat__value">02:00</div>
+            <div class="stat__delta up">Successful · 4h ago</div>
+          </div>
+        </div>
+
+        <div class="grid grid-2 mb-24">
+          <!-- Installed apps -->
+          <div class="card">
+            <div class="card__head">
+              <h3>My Apps</h3>
+              <a href="my-apps.html" class="btn btn--ghost btn--sm">View all →</a>
+            </div>
+            <div class="card__body" style="padding:0">
+              <div class="table-wrap">
+                <table class="tbl">
+                  <thead><tr><th>App</th><th>Status</th><th>URL</th><th></th></tr></thead>
+                  <tbody>
+                    <tr><td>Nextcloud</td><td><span class="badge badge--ok"><span class="dot"></span>Running</span></td><td class="mono">cloud.local</td><td><a href="#" class="btn btn--ghost btn--sm">Open</a></td></tr>
+                    <tr><td>Jellyfin</td><td><span class="badge badge--ok"><span class="dot"></span>Running</span></td><td class="mono">media.local</td><td><a href="#" class="btn btn--ghost btn--sm">Open</a></td></tr>
+                    <tr><td>Gitea</td><td><span class="badge badge--warn"><span class="dot"></span>Starting</span></td><td class="mono">git.local</td><td><a href="#" class="btn btn--ghost btn--sm">Open</a></td></tr>
+                    <tr><td>Vaultwarden</td><td><span class="badge badge--ok"><span class="dot"></span>Running</span></td><td class="mono">vault.local</td><td><a href="#" class="btn btn--ghost btn--sm">Open</a></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- System health -->
+          <div class="card">
+            <div class="card__head">
+              <h3>System Health</h3>
+              <span class="badge badge--ok"><span class="dot"></span> Live</span>
+            </div>
+            <div class="card__body">
+              <div class="mb-16">
+                <div class="flex between mb-8"><span class="muted">CPU usage</span><span class="mono">38%</span></div>
+                <div class="bar"><div class="bar__fill" style="width:38%"></div></div>
+              </div>
+              <div class="mb-16">
+                <div class="flex between mb-8"><span class="muted">Memory</span><span class="mono">6.1 / 16 GB</span></div>
+                <div class="bar"><div class="bar__fill" style="width:38%;background:var(--warn)"></div></div>
+              </div>
+              <div class="mb-16">
+                <div class="flex between mb-8"><span class="muted">Disk</span><span class="mono">142 / 500 GB</span></div>
+                <div class="bar"><div class="bar__fill" style="width:28%"></div></div>
+              </div>
+              <div>
+                <div class="flex between mb-8"><span class="muted">Network I/O</span><span class="mono">↓ 12 MB/s</span></div>
+                <div class="bar"><div class="bar__fill" style="width:18%;background:var(--info)"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent activity -->
+        <div class="card">
+          <div class="card__head">
+            <h3>Recent Activity</h3>
+            <a href="admin-backups.html" class="btn btn--ghost btn--sm">Audit log →</a>
+          </div>
+          <div class="card__body" style="padding:0">
+            <div class="table-wrap">
+              <table class="tbl">
+                <thead><tr><th>Time</th><th>User</th><th>Action</th><th>Resource</th><th>Outcome</th></tr></thead>
+                <tbody>
+                  <tr><td class="mono">08:14:22</td><td>jan</td><td>install</td><td class="mono">gitea</td><td><span class="badge badge--ok"><span class="dot"></span>Success</span></td></tr>
+                  <tr><td class="mono">07:58:01</td><td>system</td><td>backup</td><td class="mono">nightly</td><td><span class="badge badge--ok"><span class="dot"></span>Success</span></td></tr>
+                  <tr><td class="mono">07:30:44</td><td>jan</td><td>start</td><td class="mono">jellyfin</td><td><span class="badge badge--ok"><span class="dot"></span>Success</span></td></tr>
+                  <tr><td class="mono">06:55:10</td><td>system</td><td>health-check</td><td class="mono">vaultwarden</td><td><span class="badge badge--bad"><span class="dot"></span>Failed</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin · Settings — Server App Manager</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="sidebar__brand"><div class="sidebar__logo">S</div>Server App Manager</div>
+      <nav class="sidebar__nav">
+        <h4>General</h4>
+        <a class="nav-link" href="home.html"><span class="ic">📊</span> Dashboard</a>
+        <a class="nav-link" href="apps.html"><span class="ic">🛍️</span> App Store</a>
+        <a class="nav-link" href="my-apps.html"><span class="ic">📦</span> My Apps</a>
+        <a class="nav-link" href="containers.html"><span class="ic">🩺</span> Containers</a>
+        <a class="nav-link" href="launch.html"><span class="ic">🚀</span> Launch</a>
+        <h4>Administration</h4>
+        <a class="nav-link" href="admin-users.html"><span class="ic">👥</span> Users</a>
+        <a class="nav-link" href="admin-apps.html"><span class="ic">🗂️</span> Apps</a>
+        <a class="nav-link" href="admin-secrets.html"><span class="ic">🗝️</span> Secrets</a>
+        <a class="nav-link" href="admin-backups.html"><span class="ic">💾</span> Backups & Logs</a>
+        <a class="nav-link active" href="admin-settings.html"><span class="ic">🛠️</span> Settings</a>
+      </nav>
+      <div class="sidebar__user">
+        <div class="avatar">JD</div>
+        <div><div class="name">Jan Devos</div><div class="role">Administrator</div></div>
+      </div>
+    </aside>
+
+    <div class="main">
+      <div class="topbar">
+        <span class="crumb">Administration</span>
+        <h1>Settings</h1>
+        <div class="spacer"></div>
+        <button class="btn btn--primary btn--sm">Save changes</button>
+      </div>
+
+      <div class="content">
+        <div class="tabs">
+          <div class="tab active">General</div>
+          <div class="tab">SSL / TLS</div>
+          <div class="tab">Backups</div>
+          <div class="tab">Rate limiting</div>
+          <div class="tab">Security</div>
+        </div>
+
+        <div class="grid grid-2">
+          <!-- General -->
+          <div class="card">
+            <div class="card__head"><h3>General</h3></div>
+            <div class="card__body">
+              <div class="field">
+                <label>Platform name</label>
+                <input class="input" value="Server App Manager" />
+              </div>
+              <div class="field">
+                <label>Base domain</label>
+                <input class="input input--mono" value="local" />
+                <div class="hint">Apps are served on <span class="mono">&lt;subdomain&gt;.local</span></div>
+              </div>
+              <div class="field mb-0">
+                <label>Default language</label>
+                <select class="select"><option>English</option><option>Nederlands</option></select>
+              </div>
+            </div>
+          </div>
+
+          <!-- SSL -->
+          <div class="card">
+            <div class="card__head"><h3>SSL / TLS</h3><span class="badge badge--ok"><span class="dot"></span> ACME active</span></div>
+            <div class="card__body">
+              <div class="field">
+                <label>Certificate mode</label>
+                <select class="select"><option>Let's Encrypt (auto)</option><option>Custom certificate</option><option>Self-signed</option></select>
+              </div>
+              <div class="field">
+                <label>ACME email</label>
+                <input class="input" type="email" value="admin@local" />
+              </div>
+              <div class="field">
+                <label>DNS challenge provider</label>
+                <select class="select"><option>None (HTTP-01)</option><option>Cloudflare</option><option>Route53</option></select>
+              </div>
+              <div class="field mb-0">
+                <label>Upload custom certificate</label>
+                <button class="btn" style="width:100%;justify-content:center">📁 Choose .pem / .key files</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Backups -->
+          <div class="card">
+            <div class="card__head"><h3>Backups</h3></div>
+            <div class="card__body">
+              <div class="field">
+                <label>Nightly backup time (UTC)</label>
+                <input class="input input--mono" type="time" value="02:00" />
+              </div>
+              <div class="field">
+                <label>Retention (days)</label>
+                <input class="input" type="number" value="14" />
+              </div>
+              <div class="field">
+                <label>Backup path</label>
+                <input class="input input--mono" value="/data/backups" />
+              </div>
+              <div class="flex between center mb-0">
+                <span style="font-size:13px">Pre-install snapshot</span>
+                <label class="flex center gap-8" style="font-size:13px"><input type="checkbox" checked /> Enabled</label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Rate limiting -->
+          <div class="card">
+            <div class="card__head"><h3>Rate limiting</h3></div>
+            <div class="card__body">
+              <div class="grid grid-2">
+                <div class="field">
+                  <label>Installs / user / hour</label>
+                  <input class="input" type="number" value="5" />
+                </div>
+                <div class="field">
+                  <label>Installs / app / hour</label>
+                  <input class="input" type="number" value="2" />
+                </div>
+              </div>
+              <div class="grid grid-2">
+                <div class="field">
+                  <label>Login attempts / 5 min</label>
+                  <input class="input" type="number" value="10" />
+                </div>
+                <div class="field mb-0">
+                  <label>API requests / min</label>
+                  <input class="input" type="number" value="120" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Security -->
+          <div class="card" style="grid-column:1 / -1">
+            <div class="card__head"><h3>Security headers</h3><span class="badge badge--ok"><span class="dot"></span> Enforced via Traefik</span></div>
+            <div class="card__body">
+              <div class="grid grid-2">
+                <div class="flex between center mb-8"><span class="mono">Content-Security-Policy</span><span class="badge badge--ok"><span class="dot"></span>On</span></div>
+                <div class="flex between center mb-8"><span class="mono">X-Frame-Options</span><span class="badge badge--ok"><span class="dot"></span>DENY</span></div>
+                <div class="flex between center mb-8"><span class="mono">Strict-Transport-Security</span><span class="badge badge--ok"><span class="dot"></span>max-age=31536000</span></div>
+                <div class="flex between center mb-8"><span class="mono">Referrer-Policy</span><span class="badge badge--ok"><span class="dot"></span>no-referrer</span></div>
+                <div class="flex between center mb-8"><span class="mono">CORS</span><span class="badge badge--ok"><span class="dot"></span>Restricted</span></div>
+                <div class="flex between center mb-8"><span class="mono">CSRF protection</span><span class="badge badge--warn"><span class="dot"></span>Off</span></div>
+              </div>
+              <div class="card__foot" style="padding:14px 0 0;border-top:1px solid var(--border);margin-top:8px">
+                <button class="btn btn--danger btn--sm">Enable CSRF</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

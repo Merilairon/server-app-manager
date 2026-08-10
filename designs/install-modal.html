@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Install App — Server App Manager</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="sidebar__brand"><div class="sidebar__logo">S</div>Server App Manager</div>
+      <nav class="sidebar__nav">
+        <h4>General</h4>
+        <a class="nav-link" href="home.html"><span class="ic">📊</span> Dashboard</a>
+        <a class="nav-link active" href="apps.html"><span class="ic">🛍️</span> App Store</a>
+        <a class="nav-link" href="my-apps.html"><span class="ic">📦</span> My Apps</a>
+        <a class="nav-link" href="containers.html"><span class="ic">🩺</span> Containers</a>
+        <a class="nav-link" href="launch.html"><span class="ic">🚀</span> Launch</a>
+        <h4>Administration</h4>
+        <a class="nav-link" href="admin-users.html"><span class="ic">👥</span> Users</a>
+        <a class="nav-link" href="admin-apps.html"><span class="ic">🗂️</span> Apps</a>
+        <a class="nav-link" href="admin-secrets.html"><span class="ic">🗝️</span> Secrets</a>
+        <a class="nav-link" href="admin-backups.html"><span class="ic">💾</span> Backups & Logs</a>
+        <a class="nav-link" href="admin-settings.html"><span class="ic">🛠️</span> Settings</a>
+      </nav>
+      <div class="sidebar__user">
+        <div class="avatar">JD</div>
+        <div><div class="name">Jan Devos</div><div class="role">Administrator</div></div>
+      </div>
+    </aside>
+
+    <div class="main">
+      <div class="topbar">
+        <span class="crumb">App Store</span>
+        <h1>Install Nextcloud</h1>
+        <div class="spacer"></div>
+        <div class="search"><span class="ic">🔍</span><input placeholder="Search…" /></div>
+      </div>
+
+      <div class="content content--wide" style="filter:blur(1px) brightness(0.6)">
+        <div class="grid grid-auto">
+          <div class="app-card"><div class="app-card__top"><div class="app-icon" style="background:#1d4ed8">☁️</div><div><div class="app-card__name">Nextcloud</div></div></div></div>
+          <div class="app-card"><div class="app-card__top"><div class="app-icon" style="background:#b91c1c">🎬</div><div><div class="app-card__name">Jellyfin</div></div></div></div>
+          <div class="app-card"><div class="app-card__top"><div class="app-icon" style="background:#7c3aed">🐙</div><div><div class="app-card__name">Gitea</div></div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Install modal -->
+  <div class="modal-overlay">
+    <div class="modal modal--lg">
+      <div class="modal__head">
+        <div class="flex center gap-12">
+          <div class="app-icon" style="background:#1d4ed8;width:36px;height:36px;font-size:18px">☁️</div>
+          <div>
+            <h2>Install Nextcloud</h2>
+            <div class="dim" style="font-size:12px">v28.0.1 · Productivity · ~512 MB image</div>
+          </div>
+        </div>
+        <button class="modal__close">✕</button>
+      </div>
+
+      <div class="modal__body">
+        <!-- Progress steps -->
+        <div class="progress">
+          <div class="progress__step done"><span class="dot">✓</span>Configure</div>
+          <div class="progress__step active"><span class="dot">2</span>Review</div>
+          <div class="progress__step"><span class="dot">3</span>Install</div>
+          <div class="progress__step"><span class="dot">4</span>Health check</div>
+        </div>
+
+        <p class="section-title">Required parameters</p>
+
+        <div class="field">
+          <label>Sub-domain</label>
+          <div class="flex gap-8 center">
+            <input class="input input--mono" value="cloud" style="flex:0 0 140px" />
+            <span class="muted">.local</span>
+          </div>
+          <div class="hint">App will be reachable at <span class="mono">https://cloud.local</span></div>
+        </div>
+
+        <div class="grid grid-2">
+          <div class="field">
+            <label>Admin username</label>
+            <input class="input" value="admin" />
+          </div>
+          <div class="field">
+            <label>Admin password</label>
+            <input class="input" type="password" value="••••••••••" />
+            <div class="hint">Stored as a Docker secret — never logged.</div>
+          </div>
+        </div>
+
+        <div class="grid grid-2">
+          <div class="field">
+            <label>Database</label>
+            <select class="select"><option>PostgreSQL (recommended)</option><option>MariaDB</option><option>SQLite</option></select>
+          </div>
+          <div class="field">
+            <label>Storage quota (GB)</label>
+            <input class="input" type="number" value="50" />
+          </div>
+        </div>
+
+        <p class="section-title mt-8">Optional parameters</p>
+
+        <div class="field">
+          <label>Environment variables</label>
+          <div class="kv-row">
+            <input class="input input--mono" placeholder="KEY" value="MAIL_FROM" />
+            <input class="input input--mono" placeholder="value" value="no-reply@local" />
+            <button class="btn btn--ghost btn--icon">🗑</button>
+          </div>
+          <div class="kv-row">
+            <input class="input input--mono" placeholder="KEY" value="SMTP_HOST" />
+            <input class="input input--mono" placeholder="value" value="smtp.local" />
+            <button class="btn btn--ghost btn--icon">🗑</button>
+          </div>
+          <button class="btn btn--ghost btn--sm">+ Add variable</button>
+        </div>
+
+        <div class="card" style="background:var(--bg-elev);border-color:var(--border-strong)">
+          <div class="card__body" style="padding:14px 16px">
+            <div class="flex between center">
+              <div class="flex center gap-8">
+                <span style="font-size:16px">💾</span>
+                <div>
+                  <div style="font-weight:600;font-size:13px">Pre-install backup</div>
+                  <div class="dim" style="font-size:11.5px">A snapshot is taken before any change.</div>
+                </div>
+              </div>
+              <span class="badge badge--ok"><span class="dot"></span> Enabled</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal__foot">
+        <button class="btn">Cancel</button>
+        <button class="btn btn--primary">Install Nextcloud →</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
