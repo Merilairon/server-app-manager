@@ -53,6 +53,12 @@ services:
     mem_limit: 1g
     cpus: 1.0
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/healthz >/dev/null"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 300s
 
   frontend:
     build:
@@ -62,7 +68,8 @@ services:
     environment:
       - NODE_ENV=development
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     ports:
       - "4200:4200"
     volumes:
