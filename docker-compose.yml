@@ -1,0 +1,94 @@
+# Server App Manager – Docker Compose baseline stack.
+# Per US-1: three services (backend, traefik, db) with ports 80/443 exposed,
+# resource limits, and tenant-prefixed resource names.
+#
+# The backend serves both the /api/v1 API and the compiled Angular SPA,
+# so there is no separate frontend container.
+#
+# All Docker resources are prefixed with the tenant ID via COMPOSE_PROJECT_NAME.
+
+name: ${TENANT_ID:-tenant_default}
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: ${TENANT_ID:-tenant_default}_backend
+    env_file:
+      - .env
+    environment:
+      - STATIC_DIR=/app/static
+      - RUST_LOG=info
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - backend
+      - admin
+    volumes:
+      - app_data:/data
+    mem_limit: 512m
+    cpus: 0.5
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=false"
+
+  db:
+    image: postgres:17-alpine
+    container_name: ${TENANT_ID:-tenant_default}_db
+    environment:
+      POSTGRES_USER: sam
+      POSTGRES_PASSWORD: sam
+      POSTGRES_DB: sam
+    networks:
+      - backend
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    mem_limit: 256m
+    cpus: 0.25
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sam -d sam"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    labels:
+      - "traefik.enable=false"
+
+  traefik:
+    image: traefik:v3.4
+    container_name: ${TENANT_ID:-tenant_default}_traefik
+    command:
+      - "--configFile=/etc/traefik/traefik.yml"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik:/etc/traefik:ro
+      - traefik_acme:/acme
+    networks:
+      - backend
+      - admin
+    mem_limit: 128m
+    cpus: 0.25
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=false"
+
+networks:
+  backend:
+    name: ${TENANT_ID:-tenant_default}_backend
+    internal: false
+  admin:
+    name: ${TENANT_ID:-tenant_default}_admin
+    internal: false
+
+volumes:
+  app_data:
+    name: ${TENANT_ID:-tenant_default}_app_data
+  pg_data:
+    name: ${TENANT_ID:-tenant_default}_pg_data
+  traefik_acme:
+    name: ${TENANT_ID:-tenant_default}_traefik_acme

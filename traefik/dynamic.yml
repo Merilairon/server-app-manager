@@ -1,0 +1,33 @@
+# Traefik dynamic configuration for Server App Manager.
+# The backend serves both the /api/v1 API and the Angular SPA,
+# so only one router + service is needed.
+
+http:
+  routers:
+    app:
+      rule: "Host(`app.example.com`) || Host(`localhost`)"
+      entryPoints:
+        - websecure
+      service: backend
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - security-headers
+
+  middlewares:
+    security-headers:
+      headers:
+        contentTypeNosniff: true
+        frameDeny: true
+        referrerPolicy: "strict-origin-when-cross-origin"
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        stsPreload: true
+        customFrameOptionsValue: "DENY"
+        browserXssFilter: true
+
+  services:
+    backend:
+      loadBalancer:
+        servers:
+          - url: "http://backend:8080"

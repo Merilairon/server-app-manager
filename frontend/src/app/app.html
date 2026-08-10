@@ -1,0 +1,32 @@
+<header class="app-header">
+  <nav class="app-nav">
+    <a
+      routerLink="/"
+      routerLinkActive="active"
+      [routerLinkActiveOptions]="{ exact: true }"
+      class="app-nav__brand"
+    >
+      {{ title() }}
+    </a>
+    <ul class="app-nav__links">
+      <li>
+        <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }"
+          >Home</a
+        >
+      </li>
+      <li>
+        <a routerLink="/apps" routerLinkActive="active">App Store</a>
+      </li>
+      <li>
+        <a routerLink="/admin" routerLinkActive="active">Admin</a>
+      </li>
+      <li>
+        <a routerLink="/login" routerLinkActive="active">Login</a>
+      </li>
+    </ul>
+  </nav>
+</header>
+
+<main class="app-main">
+  <router-outlet />
+</main>

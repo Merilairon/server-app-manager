@@ -1,0 +1,19 @@
+# Role-based permission mapping for Server App Manager.
+# Loaded at startup by the backend to enforce RBAC.
+# Adding a new role only requires updating this file and the role-check logic.
+
+roles:
+  user:
+    permissions:
+      - read:apps
+      - install:apps
+      - read:own_apps
+      - uninstall:own_apps
+      - read:own_profile
+      - update:own_profile
+
+  admin:
+    permissions:
+      - admin:all
+    inherits:
+      - user

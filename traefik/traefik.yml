@@ -1,0 +1,41 @@
+# Traefik static configuration for Server App Manager.
+# Docs: https://doc.traefik.io/traefik/
+
+global:
+  checkNewVersion: false
+  sendAnonymousUsage: false
+
+entryPoints:
+  web:
+    address: ":80"
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+          permanent: true
+  websecure:
+    address: ":443"
+
+providers:
+  file:
+    filename: "/etc/traefik/dynamic.yml"
+    watch: true
+  docker:
+    exposedByDefault: false
+    network: "${TENANT_ID:-tenant_default}_backend"
+
+api:
+  dashboard: false
+
+# ACME / Let's Encrypt.
+# Staging by default to avoid rate limits during development.
+# Set ACME_PRODUCTION=true in .env to use the production ACME server.
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      email: "${ACME_EMAIL:-admin@example.com}"
+      storage: "/acme/acme.json"
+      caServer: "https://acme-staging-v02.api.letsencrypt.org/directory"
+      httpChallenge:
+        entryPoint: web

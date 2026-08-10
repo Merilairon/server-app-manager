@@ -1,0 +1,104 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://server-app-manager/schemas/app-definition.schema.json",
+  "title": "App Definition",
+  "description": "YAML schema for app definitions in apps/store, apps/enabled, and apps/disabled.",
+  "type": "object",
+  "required": ["name", "slug", "image"],
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Human-readable app name.",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "slug": {
+      "type": "string",
+      "description": "URL-safe identifier used for sub-domain routing and network naming.",
+      "pattern": "^[a-z0-9][a-z0-9-]*[a-z0-9]$",
+      "minLength": 2,
+      "maxLength": 63
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 500
+    },
+    "image": {
+      "type": "string",
+      "description": "Docker image to run (e.g. nginx:alpine)."
+    },
+    "service": {
+      "type": "string",
+      "description": "Service name within the compose file."
+    },
+    "ports": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["container"],
+        "properties": {
+          "host": { "type": "integer" },
+          "container": { "type": "integer" }
+        }
+      }
+    },
+    "env": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    },
+    "volumes": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "depends_on": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Slugs of apps that must be installed first."
+    },
+    "healthcheck": {
+      "type": "object",
+      "properties": {
+        "test": { "type": "string" },
+        "interval": { "type": "string" },
+        "timeout": { "type": "string" },
+        "retries": { "type": "integer" }
+      }
+    },
+    "restart": {
+      "type": "string",
+      "enum": ["no", "on-failure", "always", "unless-stopped"],
+      "default": "unless-stopped"
+    },
+    "placeholders": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "type"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[A-Z_][A-Z0-9_]*$"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["string", "integer", "boolean", "secret"]
+          },
+          "label": { "type": "string" },
+          "required": { "type": "boolean", "default": true },
+          "default": {},
+          "regex": { "type": "string" },
+          "min_length": { "type": "integer" },
+          "max_length": { "type": "integer" }
+        }
+      }
+    },
+    "resource_limits": {
+      "type": "object",
+      "properties": {
+        "mem_limit": { "type": "string" },
+        "cpu_quota": { "type": "string" }
+      }
+    }
+  }
+}

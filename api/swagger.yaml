@@ -1,0 +1,623 @@
+openapi: 3.0.3
+info:
+  title: Server App Manager API
+  version: 0.1.0
+  description: |
+    REST API for the Server App Manager platform.
+    Base path: /api/v1
+    Authentication: JWT in a Secure, HttpOnly, SameSite=Strict cookie.
+  contact:
+    name: Server App Manager
+    url: https://github.com/baetensjan/server-app-manager
+
+servers:
+  - url: /api/v1
+    description: API v1
+
+security:
+  - cookieAuth: []
+
+tags:
+  - name: Auth
+    description: Authentication and password management.
+  - name: Users
+    description: User management (admin only except /me).
+  - name: Apps
+    description: App store, install, and uninstall.
+  - name: Containers
+    description: Container lifecycle management (admin only).
+  - name: Roles
+    description: Role and permission management.
+  - name: Logs
+    description: Log retrieval.
+
+paths:
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login and receive a JWT cookie
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+      responses:
+        "200":
+          description: Login successful; JWT set in HttpOnly cookie.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "501":
+          $ref: "#/components/responses/NotImplemented"
+
+  /auth/forgot-password:
+    post:
+      tags: [Auth]
+      summary: Request a password reset
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        "200":
+          description: Reset email sent (if account exists).
+        "501":
+          $ref: "#/components/responses/NotImplemented"
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Get the current authenticated user
+      responses:
+        "200":
+          description: Current user info.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CurrentUser"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /apps:
+    get:
+      tags: [Apps]
+      summary: List available apps
+      responses:
+        "200":
+          description: List of apps.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/App"
+
+  /apps/{slug}:
+    get:
+      tags: [Apps]
+      summary: Get a single app definition
+      parameters:
+        - $ref: "#/components/parameters/Slug"
+      responses:
+        "200":
+          description: App definition.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/App"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /apps/install:
+    post:
+      tags: [Apps]
+      summary: Install an app
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [slug]
+              properties:
+                slug:
+                  type: string
+                parameters:
+                  type: object
+                  additionalProperties: true
+      responses:
+        "200":
+          description: App installed successfully.
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "501":
+          $ref: "#/components/responses/NotImplemented"
+
+  /apps/{slug}/uninstall:
+    post:
+      tags: [Apps]
+      summary: Uninstall an app
+      parameters:
+        - $ref: "#/components/parameters/Slug"
+      responses:
+        "200":
+          description: App uninstalled successfully.
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "501":
+          $ref: "#/components/responses/NotImplemented"
+
+  /containers/launch:
+    post:
+      tags: [Containers]
+      summary: Launch a child container
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContainerLaunchRequest"
+      responses:
+        "200":
+          description: Container launched.
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "501":
+          $ref: "#/components/responses/NotImplemented"
+
+  /containers/start/{id}:
+    post:
+      tags: [Containers]
+      summary: Start a container
+      parameters:
+        - $ref: "#/components/parameters/ContainerId"
+      responses:
+        "200":
+          description: Container started.
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "501":
+          $ref: "#/components/responses/NotImplemented"
+
+  /containers/stop/{id}:
+    post:
+      tags: [Containers]
+      summary: Stop a container
+      parameters:
+        - $ref: "#/components/parameters/ContainerId"
+      responses:
+        "200":
+          description: Container stopped.
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "501":
+          $ref: "#/components/responses/NotImplemented"
+
+  /containers/{id}:
+    get:
+      tags: [Containers]
+      summary: Inspect a container
+      parameters:
+        - $ref: "#/components/parameters/ContainerId"
+      responses:
+        "200":
+          description: Container metadata.
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /containers/{id}/health:
+    get:
+      tags: [Containers]
+      summary: Get container health status
+      parameters:
+        - $ref: "#/components/parameters/ContainerId"
+      responses:
+        "200":
+          description: Health status.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContainerHealth"
+
+  /containers/{id}/logs:
+    get:
+      tags: [Containers]
+      summary: Stream container logs (SSE)
+      parameters:
+        - $ref: "#/components/parameters/ContainerId"
+      responses:
+        "200":
+          description: Log stream (text/event-stream).
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "501":
+          $ref: "#/components/responses/NotImplemented"
+
+  /users:
+    get:
+      tags: [Users]
+      summary: List users (admin only)
+      responses:
+        "200":
+          description: List of users.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    post:
+      tags: [Users]
+      summary: Create a user (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserCreate"
+      responses:
+        "201":
+          description: User created.
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "501":
+          $ref: "#/components/responses/NotImplemented"
+
+  /users/me:
+    put:
+      tags: [Users]
+      summary: Update own profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserUpdate"
+      responses:
+        "200":
+          description: Profile updated.
+        "501":
+          $ref: "#/components/responses/NotImplemented"
+
+  /users/{id}/password:
+    put:
+      tags: [Users]
+      summary: Update a user's password
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [password]
+              properties:
+                password:
+                  type: string
+                  format: password
+      responses:
+        "200":
+          description: Password updated.
+        "501":
+          $ref: "#/components/responses/NotImplemented"
+
+  /roles:
+    get:
+      tags: [Roles]
+      summary: List roles
+      responses:
+        "200":
+          description: List of roles.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Role"
+    post:
+      tags: [Roles]
+      summary: Create a role (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Role"
+      responses:
+        "201":
+          description: Role created.
+        "501":
+          $ref: "#/components/responses/NotImplemented"
+
+  /roles/{name}:
+    put:
+      tags: [Roles]
+      summary: Update a role (admin only)
+      parameters:
+        - $ref: "#/components/parameters/RoleName"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Role"
+      responses:
+        "200":
+          description: Role updated.
+        "501":
+          $ref: "#/components/responses/NotImplemented"
+
+  /logs:
+    get:
+      tags: [Logs]
+      summary: Retrieve logs
+      parameters:
+        - in: query
+          name: appSlug
+          schema:
+            type: string
+        - in: query
+          name: date
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Log entries.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LogResponse"
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: token
+      description: JWT delivered in a Secure, HttpOnly, SameSite=Strict cookie.
+
+  parameters:
+    Slug:
+      name: slug
+      in: path
+      required: true
+      schema:
+        type: string
+    ContainerId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+    UserId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    RoleName:
+      name: name
+      in: path
+      required: true
+      schema:
+        type: string
+
+  responses:
+    BadRequest:
+      description: Bad request.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Unauthorized:
+      description: Unauthorized.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Forbidden:
+      description: Forbidden.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    NotFound:
+      description: Not found.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Conflict:
+      description: Conflict.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    TooManyRequests:
+      description: Too many requests.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    NotImplemented:
+      description: Not implemented yet (skeleton stub).
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+  schemas:
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+
+    CurrentUser:
+      type: object
+      properties:
+        user_id:
+          type: string
+          nullable: true
+        role:
+          type: string
+          nullable: true
+        tenant_id:
+          type: string
+          nullable: true
+
+    App:
+      type: object
+      properties:
+        name:
+          type: string
+        slug:
+          type: string
+        description:
+          type: string
+        image:
+          type: string
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+        status:
+          type: string
+        last_login:
+          type: string
+          format: date-time
+          nullable: true
+
+    UserCreate:
+      type: object
+      required: [username, email, password, role]
+      properties:
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+        role:
+          type: string
+          enum: [user, admin]
+
+    UserUpdate:
+      type: object
+      properties:
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+
+    Role:
+      type: object
+      required: [name, permissions]
+      properties:
+        name:
+          type: string
+        permissions:
+          type: array
+          items:
+            type: string
+
+    ContainerLaunchRequest:
+      type: object
+      required: [image]
+      properties:
+        image:
+          type: string
+        env:
+          type: object
+          additionalProperties:
+            type: string
+        ports:
+          type: array
+          items:
+            type: string
+        command:
+          type: string
+
+    ContainerHealth:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, unhealthy, starting, unknown]
+        last_checked:
+          type: string
+          format: date-time
+          nullable: true
+
+    LogResponse:
+      type: object
+      properties:
+        lines:
+          type: array
+          items:
+            type: string
+        app_slug:
+          type: string
+          nullable: true
+        date:
+          type: string
+          nullable: true
