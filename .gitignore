@@ -4,11 +4,13 @@
 *.pdb
 
 # Node / Angular
+/node_modules/
 /frontend/node_modules/
 /frontend/dist/
 /frontend/.angular/cache/
 /frontend/coverage/
 npm-debug.log*
+pnpm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 

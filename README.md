@@ -6,11 +6,11 @@ A single-tenant, self-hosted "app store" for containerized applications. Deploy,
 
 Three-tier containerized stack:
 
-| Tier         | Technology                          |
-| ------------ | ----------------------------------- |
-| Presentation | Angular SPA (served by the backend) |
-| Application  | Rust REST API (axum)                |
-| Infrastructure | Docker Compose, Traefik, Postgres |
+| Tier           | Technology                          |
+| -------------- | ----------------------------------- |
+| Presentation   | Angular SPA (served by the backend) |
+| Application    | Rust REST API (axum)                |
+| Infrastructure | Docker Compose, Traefik, Postgres   |
 
 The Rust backend serves both the `/api/v1` REST API and the compiled Angular SPA via `tower-http` `ServeDir`. Traefik handles TLS termination and routing. Postgres stores users and roles.
 
@@ -21,6 +21,7 @@ See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the full architecture doc
 - **Docker** 24+ and **Docker Compose** v2+
 - **Rust** 1.94+ (for local backend development)
 - **Node.js** 24.15+ (for local frontend development; managed via [Volta](https://volta.sh))
+- **pnpm** 11.0.9+ (managed via Corepack/Volta — see `packageManager` field in `package.json`)
 
 ## Quick Start
 
@@ -50,13 +51,13 @@ open http://localhost
 
 | Command                          | Description                          |
 | -------------------------------- | ------------------------------------ |
-| `cp .env.example .env`          | Create environment configuration     |
-| `docker compose build`          | Build all Docker images              |
-| `docker compose up -d`          | Start the stack in detached mode     |
-| `docker compose down`           | Stop and remove containers           |
-| `docker compose down -v`        | Stop and remove containers + volumes |
-| `docker compose logs -f backend`| Follow backend logs                  |
-| `docker compose ps`             | Show running services                |
+| `cp .env.example .env`           | Create environment configuration     |
+| `docker compose build`           | Build all Docker images              |
+| `docker compose up -d`           | Start the stack in detached mode     |
+| `docker compose down`            | Stop and remove containers           |
+| `docker compose down -v`         | Stop and remove containers + volumes |
+| `docker compose logs -f backend` | Follow backend logs                  |
+| `docker compose ps`              | Show running services                |
 
 ## Local Development
 
@@ -73,9 +74,9 @@ cargo run --release  # run the server (requires DATABASE_URL env)
 
 ```bash
 cd frontend
-npm ci               # install dependencies
-npm start            # dev server at http://localhost:4200
-npm run build        # production build → dist/frontend/browser/
+pnpm install --frozen-lockfile  # install dependencies
+pnpm start                      # dev server at http://localhost:4200
+pnpm run build                  # production build → dist/frontend/browser/
 ```
 
 ## Project Structure
@@ -98,14 +99,14 @@ server-app-manager/
 
 See [`.env.example`](.env.example) for all environment variables:
 
-| Variable           | Default                          | Description                          |
-| ------------------ | -------------------------------- | ------------------------------------ |
-| `TENANT_ID`        | `tenant_default`                 | Prefix for all Docker resources      |
-| `DATABASE_URL`     | `postgres://sam:sam@db:5432/sam` | Postgres connection string           |
-| `JWT_SECRET`       | `changeme...`                    | JWT signing secret (override in prod)|
-| `CORS_ORIGIN`      | `https://app.example.com`        | Allowed CORS origin for the SPA      |
-| `ACME_PRODUCTION`  | `false`                          | Use Let's Encrypt production server  |
-| `ACME_EMAIL`       | `admin@example.com`              | Let's Encrypt notification email     |
+| Variable          | Default                          | Description                           |
+| ----------------- | -------------------------------- | ------------------------------------- |
+| `TENANT_ID`       | `tenant_default`                 | Prefix for all Docker resources       |
+| `DATABASE_URL`    | `postgres://sam:sam@db:5432/sam` | Postgres connection string            |
+| `JWT_SECRET`      | `changeme...`                    | JWT signing secret (override in prod) |
+| `CORS_ORIGIN`     | `https://app.example.com`        | Allowed CORS origin for the SPA       |
+| `ACME_PRODUCTION` | `false`                          | Use Let's Encrypt production server   |
+| `ACME_EMAIL`      | `admin@example.com`              | Let's Encrypt notification email      |
 
 ## Documentation
 

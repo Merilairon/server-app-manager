@@ -1,0 +1,7 @@
+# pnpm v11+ build-script allowlist (replaces onlyBuiltDependencies).
+# These native deps need their postinstall scripts to function.
+allowBuilds:
+  '@parcel/watcher': true
+  esbuild: true
+  lmdb: true
+  msgpackr-extract: true

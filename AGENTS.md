@@ -2,6 +2,15 @@
 
 Build, test, and verification commands for future sessions.
 
+## Root orchestration (run from repo root)
+
+- Install root tooling: `pnpm install` (adds `concurrently`)
+- Install frontend deps: `pnpm run install:all`
+- Start both (dev): `pnpm run dev` — runs backend + frontend concurrently
+- Build both: `pnpm run build`
+- Test both: `pnpm test`
+- Clean: `pnpm run clean`
+
 ## Backend (Rust / axum)
 
 - Build: `cargo build --release` (run from `backend/`)
@@ -11,10 +20,11 @@ Build, test, and verification commands for future sessions.
 
 ## Frontend (Angular)
 
-- Install: `cd frontend && npm ci`
-- Build: `cd frontend && npm run build` (outputs `dist/frontend/browser/`)
-- Dev server: `cd frontend && npm start`
+- Install: `cd frontend && pnpm install --frozen-lockfile`
+- Build: `cd frontend && pnpm run build` (outputs `dist/frontend/browser/`)
+- Dev server: `cd frontend && pnpm start`
 - Node requirement: v24.15.0+ (pinned via Volta in `frontend/`)
+- Package manager: pnpm 11.0.9 (pinned via `packageManager` field)
 
 ## Docker Compose stack
 

@@ -44,10 +44,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
+      - name: Enable pnpm via corepack
+        run: corepack enable
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
       - name: Build
-        run: npm run build
+        run: pnpm run build
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -66,7 +68,8 @@ jobs:
         run: 'yamllint -d "{extends: default, rules: {line-length: disable, document-start: disable, truthy: disable}}" roles/ traefik/ docker-compose.yml'
       - name: Validate OpenAPI spec
         run: |
-          npm install -g @redocly/cli@latest
+          corepack enable
+          pnpm add -g @redocly/cli@latest
           redocly lint api/swagger.yaml
 
   docker-build:
