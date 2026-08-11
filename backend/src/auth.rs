@@ -160,7 +160,8 @@ mod tests {
             admin_password: Some("pass".to_string()),
             compose_apps_dir: "/tmp".to_string(),
             cookie_secure: false,
-            base_domain: "app.example.com".to_string(),
+            base_domain: "app.local".to_string(),
+            publish_app_ports: false,
             docker_socket: None,
         }
     }

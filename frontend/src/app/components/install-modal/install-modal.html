@@ -1,81 +1,119 @@
 <div class="modal-overlay" (click)="close.emit()">
   <div class="modal" (click)="$event.stopPropagation()">
-    <div class="modal-header">
+    <div class="modal__head">
       <h2>Install {{ app.name }}</h2>
-      <button class="close" (click)="close.emit()" type="button" aria-label="Close">×</button>
+      <button class="modal__close" (click)="close.emit()" type="button" aria-label="Close">
+        ×
+      </button>
     </div>
 
-    <div class="modal-body">
-      @switch (step) {
-        @case ('configure') {
-          <form [formGroup]="form" (ngSubmit)="goToReview()">
-            @for (p of app.placeholders; track p.name) {
-              <label class="field">
-                {{ p.label ?? p.name }}
-                @if (p.required) {
-                  <span class="required">*</span>
-                }
-                <input [type]="fieldType(p.kind)" [formControlName]="p.name" />
+    @switch (step) {
+      @case ('configure') {
+        <ng-container>
+          <div class="modal__body">
+            <form [formGroup]="form" (ngSubmit)="goToReview()" id="install-form">
+              @for (p of app.placeholders; track p.name) {
+                <div class="field">
+                  <label [for]="p.name">
+                    {{ p.label ?? p.name }}
+                    @if (p.required) {
+                      <span class="required">*</span>
+                    }
+                  </label>
+                  <input
+                    [type]="fieldType(p.kind)"
+                    class="input"
+                    [id]="p.name"
+                    [formControlName]="p.name"
+                  />
+                </div>
+              } @empty {
+                <p class="dim">No configuration required.</p>
+              }
+
+              @if (error) {
+                <p class="error">{{ error }}</p>
+              }
+            </form>
+          </div>
+          <div class="modal__foot">
+            <button
+              type="submit"
+              form="install-form"
+              class="btn btn--primary"
+              [disabled]="!form.valid"
+            >
+              Review
+            </button>
+          </div>
+        </ng-container>
+      }
+
+      @case ('review') {
+        <ng-container>
+          <div class="modal__body">
+            <h3>Review configuration</h3>
+            <dl class="review-list">
+              @for (p of app.placeholders; track p.name) {
+                <div class="review-row">
+                  <dt>{{ p.label ?? p.name }}</dt>
+                  <dd>{{ displayValue(p.name, p.kind) }}</dd>
+                </div>
+              } @empty {
+                <p class="dim">No configuration required.</p>
+              }
+            </dl>
+
+            <div class="field checkbox-field">
+              <input
+                type="checkbox"
+                id="backup"
+                [checked]="backupConfirmed"
+                (change)="backupConfirmed = !backupConfirmed"
+              />
+              <label for="backup">
+                I have created a backup of existing data before installing
               </label>
-            } @empty {
-              <p>No configuration required.</p>
-            }
+            </div>
 
             @if (error) {
               <p class="error">{{ error }}</p>
             }
-
-            <div class="modal-actions">
-              <button type="submit" [disabled]="!form.valid">Review</button>
-            </div>
-          </form>
-        }
-        @case ('review') {
-          <h3>Review configuration</h3>
-          <dl class="review-list">
-            @for (p of app.placeholders; track p.name) {
-              <div class="review-row">
-                <dt>{{ p.label ?? p.name }}</dt>
-                <dd>{{ displayValue(p.name, p.kind) }}</dd>
-              </div>
-            } @empty {
-              <p>No configuration required.</p>
-            }
-          </dl>
-
-          <label class="field checkbox-field">
-            <input
-              type="checkbox"
-              [checked]="backupConfirmed"
-              (change)="backupConfirmed = !backupConfirmed"
-            />
-            I have created a backup of existing data before installing
-          </label>
-
-          @if (error) {
-            <p class="error">{{ error }}</p>
-          }
-
-          <div class="modal-actions split">
-            <button type="button" (click)="step = 'configure'">Back</button>
-            <button (click)="confirmInstall()" [disabled]="!backupConfirmed">
+          </div>
+          <div class="modal__foot">
+            <button type="button" class="btn" (click)="step = 'configure'">Back</button>
+            <button
+              class="btn btn--primary"
+              (click)="confirmInstall()"
+              [disabled]="!backupConfirmed"
+            >
               Confirm & Install
             </button>
           </div>
-        }
-        @case ('install') {
-          <p>Installing {{ app.name }}…</p>
-        }
-        @case ('done') {
-          @if (result) {
-            <p class="success">{{ app.name }} is {{ result.status }}.</p>
-            <p>
-              <a [href]="result.url" target="_blank">{{ result.url }}</a>
-            </p>
-            <button (click)="done.emit()">Done</button>
-          }
-        }
+        </ng-container>
       }
-    </div>
+
+      @case ('install') {
+        <div class="modal__body">
+          <p class="loading">Installing {{ app.name }}…</p>
+        </div>
+      }
+
+      @case ('done') {
+        <ng-container>
+          <div class="modal__body">
+            @if (result) {
+              <p class="success">{{ app.name }} is {{ result.status }}.</p>
+              <p class="mono">
+                <a [href]="result.url" target="_blank">{{ result.url }}</a>
+              </p>
+            }
+          </div>
+          <div class="modal__foot">
+            <button class="btn btn--primary" (click)="done.emit()">Done</button>
+          </div>
+        </ng-container>
+      }
+    }
   </div>
 </div>

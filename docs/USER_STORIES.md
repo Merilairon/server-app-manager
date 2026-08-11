@@ -187,7 +187,7 @@ As an administrator, I need secure access controls so that only authorized users
 - **Backend enforcement** – Every container‑management endpoint checks the JWT’s `role` claim; non‑admin requests get **403 Forbidden**.
 - **No secret leakage** – Environment variables that are secrets (read from Docker secrets) are never sent back to the client; only high‑level status fields are returned.
 - **Audit logging** – Each admin action logs: user ID, endpoint, outcome (success/failure), and container ID (if applicable).
-- **CORS** – Only the Angular SPA origin (`https://app.example.com`) is allowed; all other origins receive **403 Forbidden**.
+- **CORS** – Only the Angular SPA origin (`https://app.local`) is allowed; all other origins receive **403 Forbidden**.
 
 ## Technical Constraints & Edge Cases
 
@@ -197,7 +197,7 @@ As an administrator, I need secure access controls so that only authorized users
 - Backend must **re‑check** the JWT role on every container‑management request; non‑admin → 403 Forbidden.
 - Secrets (Docker secrets) must never be included in any API response; only high‑level status fields are returned.
 - Audit logging for each admin action: record user ID, endpoint, outcome (success/failure), container ID (if applicable).
-- CORS policy: only `https://app.example.com` allowed; any other origin → 403 Forbidden.
+- CORS policy: only `https://app.local` allowed; any other origin → 403 Forbidden.
 
 **Edge Cases**
 
@@ -970,7 +970,7 @@ As a security analyst, I want all API calls to be protected against cross‑orig
 
 ## Acceptance Criteria
 
-- **CORS** – The backend allows only the origin(s) of the Angular SPA (e.g., `https://app.example.com`). All other origins receive **403 Forbidden**.
+- **CORS** – The backend allows only the origin(s) of the Angular SPA (e.g., `https://app.local`). All other origins receive **403 Forbidden**.
 - **CSRF token**:
   - The SPA embeds a CSRF token (e.g., as a meta tag `<meta name="csrf-token" content="…">` or via an HttpOnly cookie).
   - For state‑changing POST/PUT/DELETE endpoints, the backend verifies the token before processing.
@@ -987,7 +987,7 @@ As a security analyst, I want all API calls to be protected against cross‑orig
 
 **Technical Constraints**
 
-- **CORS**: backend allows only origin `https://app.example.com`; all other origins receive **403 Forbidden**.
+- **CORS**: backend allows only origin `https://app.local other origins receive **403 Forbidden**.
 - **CSRF token**: SPA embeds token (e.g., meta tag or HttpOnly cookie). For state‑changing POST/PUT/DELETE endpoints, backend verifies token before processing.
 - **Security headers** (added by middleware or Traefik):
   - `Content‑Security‑Policy` (nonce‑based for inline scripts).

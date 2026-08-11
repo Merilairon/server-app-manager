@@ -1,18 +1,35 @@
-<div class="login-page">
+<div class="login-bg">
   <div class="login-card">
-    <h1>Server App Manager</h1>
-    <p class="login-subtitle">Sign in to manage your apps</p>
+    <div class="login-card__brand">
+      <div class="logo">S</div>
+      <div>
+        <h1>Server App Manager</h1>
+        <p>Sign in to manage your apps</p>
+      </div>
+    </div>
 
     <form [formGroup]="form" (ngSubmit)="onSubmit()" class="login-form">
-      <label>
-        Username
-        <input type="text" formControlName="username" placeholder="admin" />
-      </label>
-      <label>
-        Password
-        <input type="password" formControlName="password" placeholder="••••••••" />
-      </label>
-      <button type="submit" [disabled]="loading">
+      <div class="field">
+        <label for="username">Username</label>
+        <input
+          id="username"
+          type="text"
+          class="input"
+          formControlName="username"
+          placeholder="admin"
+        />
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input
+          id="password"
+          type="password"
+          class="input"
+          formControlName="password"
+          placeholder="••••••••"
+        />
+      </div>
+      <button type="submit" class="btn btn--primary" [disabled]="loading">
         {{ loading ? 'Signing in…' : 'Sign in' }}
       </button>
     </form>
@@ -20,5 +37,10 @@
     @if (error) {
       <p class="login-error">{{ error }}</p>
     }
+
+    <div class="login-footer">
+      <span class="badge badge--ok"><span class="dot"></span>Server online</span>
+      <p>Protected by JWT · HttpOnly cookie · RBAC enforced</p>
+    </div>
   </div>
 </div>

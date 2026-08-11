@@ -1,5 +1,5 @@
 <div class="my-apps-page">
-  <h1>My Apps</h1>
+  <h2 class="section-title">My Apps</h2>
 
   @if (loading()) {
     <p class="loading">Loading…</p>
@@ -22,15 +22,22 @@
     <div class="app-grid">
       @for (app of filteredApps(); track app.slug) {
         <div class="app-card">
-          <h3>{{ app.name }}</h3>
-          <p class="status">{{ app.status }}</p>
-          <div class="actions">
-            <a [href]="'https://' + app.slug + '.app.example.com'" target="_blank">Open</a>
-            <button (click)="uninstall(app)">Uninstall</button>
+          <div class="app-card__top">
+            <div class="app-icon">{{ app.name[0] }}</div>
+            <div>
+              <div class="app-card__name">{{ app.name }}</div>
+              <span [class]="statusBadgeClass(app.status)">
+                <span class="dot"></span>{{ app.status }}
+              </span>
+            </div>
+          </div>
+          <div class="app-card__foot">
+            <a class="btn btn--primary btn--sm" [href]="appUrl(app)" target="_blank"> Open </a>
+            <button class="btn btn--danger btn--sm" (click)="uninstall(app)">Uninstall</button>
           </div>
         </div>
       } @empty {
-        <p>No installed apps yet.</p>
+        <p class="dim">No installed apps yet.</p>
       }
     </div>
   }

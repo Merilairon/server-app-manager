@@ -77,7 +77,7 @@ pub struct AppDefinition {
     #[serde(default)]
     pub placeholders: Vec<Placeholder>,
     pub resource_limits: Option<ResourceLimits>,
-    #[serde(skip)]
+    #[serde(default)]
     pub status: String,
 }
 
@@ -196,7 +196,8 @@ placeholders:
                 admin_password: None,
                 compose_apps_dir: base.to_str().unwrap().to_string(),
                 cookie_secure: false,
-                base_domain: "app.example.com".to_string(),
+                base_domain: "app.local".to_string(),
+                publish_app_ports: false,
                 docker_socket: None,
             },
             base,

@@ -6,6 +6,8 @@ image: traefik/whoami
 service: whoami
 ports:
   - container: 80
+    host: 500
+
 healthcheck:
   test: "wget -qO- http://localhost:80/ || exit 1"
   interval: 10s

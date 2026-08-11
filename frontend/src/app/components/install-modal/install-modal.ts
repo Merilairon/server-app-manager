@@ -4,6 +4,7 @@ import { App, AppsService } from '../../services/apps.service';
 
 @Component({
   selector: 'app-install-modal',
+  standalone: true,
   imports: [ReactiveFormsModule],
   templateUrl: './install-modal.html',
   styleUrl: './install-modal.scss',
@@ -69,7 +70,11 @@ export class InstallModal implements OnInit {
       next: (res) => {
         this.result = res;
         this.loading = false;
-        this.step = 'done';
+        if (res.status === 'healthy') {
+          this.done.emit();
+        } else {
+          this.step = 'done';
+        }
       },
       error: (err) => {
         this.loading = false;

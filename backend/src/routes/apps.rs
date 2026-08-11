@@ -32,7 +32,10 @@ async fn list_apps(
 ) -> Result<Json<Value>, AppError> {
     require_permission(&state, &claims, "read:apps")?;
     let catalog = Catalog::load(&state.config)?;
-    Ok(Json(json!({ "apps": catalog.apps })))
+    Ok(Json(json!({
+        "apps": catalog.apps,
+        "base_domain": state.config.base_domain,
+    })))
 }
 
 async fn get_app(

@@ -1,5 +1,5 @@
 <div class="apps-page">
-  <h1>App Store</h1>
+  <h2 class="section-title">App Store</h2>
 
   @if (loading()) {
     <p class="loading">Loading catalog…</p>
@@ -19,7 +19,7 @@
           </button>
         }
       </div>
-      <select [value]="sortBy()" (change)="setSort($any($event.target).value)">
+      <select class="select" [value]="sortBy()" (change)="setSort($any($event.target).value)">
         <option value="name">Sort by name</option>
         <option value="category">Sort by category</option>
       </select>
@@ -28,13 +28,24 @@
     <div class="app-grid">
       @for (app of filteredApps(); track app.slug) {
         <div class="app-card">
-          <h3>{{ app.name }}</h3>
-          <p class="category">{{ app.category ?? 'Other' }}</p>
-          <p class="description">{{ app.description ?? '' }}</p>
-          <button (click)="select(app)">Install</button>
+          <div class="app-card__top">
+            <div class="app-icon">{{ app.name[0] }}</div>
+            <div>
+              <div class="app-card__name">{{ app.name }}</div>
+              <div class="app-card__cat">{{ app.category ?? 'Other' }}</div>
+            </div>
+          </div>
+          <p class="app-card__desc">{{ app.description ?? '' }}</p>
+          <div class="app-card__foot">
+            <span class="app-card__meta">
+              <span>★ 0</span>
+              <span>0 installs</span>
+            </span>
+            <button class="btn btn--primary btn--sm" (click)="select(app)">Install</button>
+          </div>
         </div>
       } @empty {
-        <p>No apps available in the store.</p>
+        <p class="dim">No apps available in the store.</p>
       }
     </div>
   }

@@ -1,19 +1,9 @@
 # Traefik dynamic configuration for Server App Manager.
-# The backend serves both the /api/v1 API and the Angular SPA,
-# so only one router + service is needed.
+# The backend router is now declared via Docker labels in docker-compose.yml
+# so BASE_DOMAIN is controlled by the .env variable.
+# This file still defines the backend service and shared security middleware.
 
 http:
-  routers:
-    app:
-      rule: "Host(`app.example.com`) || Host(`localhost`)"
-      entryPoints:
-        - websecure
-      service: backend
-      tls:
-        certResolver: letsencrypt
-      middlewares:
-        - security-headers
-
   middlewares:
     security-headers:
       headers:

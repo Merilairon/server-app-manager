@@ -1,0 +1,13 @@
+name: Portainer
+slug: portainer
+description: Lightweight container management UI for Docker.
+category: Tools
+image: portainer/portainer-ce:latest
+service: portainer
+ports:
+  - container: 9000
+    host: 9000
+volumes:
+  - /var/run/docker.sock:/var/run/docker.sock:ro
+  - portainer_data:/data
+restart: unless-stopped

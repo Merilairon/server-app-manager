@@ -13,6 +13,7 @@ export class MyApps implements OnInit {
   apps = signal<App[]>([]);
   loading = signal(true);
   error = '';
+  baseDomain = '';
   statusFilter = signal<string>('All');
 
   statuses = computed(() => {
@@ -39,6 +40,7 @@ export class MyApps implements OnInit {
     this.appsService.list().subscribe({
       next: (res) => {
         this.apps.set(res.apps.filter((a) => a.status !== 'available'));
+        this.baseDomain = res.base_domain;
         this.loading.set(false);
       },
       error: (err) => {
@@ -52,6 +54,15 @@ export class MyApps implements OnInit {
     this.statusFilter.set(status);
   }
 
+  appUrl(app: App): string {
+    const hostPort = app.ports.find((p) => p.host != null)?.host;
+    const localDomain = this.baseDomain === 'localhost' || this.baseDomain.endsWith('.local');
+    if (hostPort != null && localDomain) {
+      return `http://localhost:${hostPort}`;
+    }
+    return `https://${app.slug}.${this.baseDomain}`;
+  }
+
   uninstall(app: App) {
     this.appsService.uninstall(app.slug).subscribe({
       next: () => this.load(),
@@ -59,5 +70,16 @@ export class MyApps implements OnInit {
         this.error = err?.error?.message ?? 'Uninstall failed';
       },
     });
+  }
+
+  statusBadgeClass(status: string): string {
+    const map: Record<string, string> = {
+      running: 'badge badge--ok',
+      healthy: 'badge badge--ok',
+      starting: 'badge badge--warn',
+      stopped: 'badge badge--neutral',
+      unhealthy: 'badge badge--bad',
+    };
+    return map[status.toLowerCase()] ?? 'badge badge--neutral';
   }
 }

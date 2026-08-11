@@ -5,6 +5,7 @@ import { InstallModal } from '../../components/install-modal/install-modal';
 
 @Component({
   selector: 'app-apps',
+  standalone: true,
   imports: [InstallModal],
   templateUrl: './apps.html',
   styleUrl: './apps.scss',

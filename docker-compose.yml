@@ -29,11 +29,17 @@ services:
       - admin
     volumes:
       - app_data:/data
+      - ./apps:/data/apps
     mem_limit: 512m
     cpus: 0.5
     restart: unless-stopped
     labels:
-      - "traefik.enable=false"
+      - "traefik.enable=true"
+      - "traefik.http.routers.app.rule=Host(`${BASE_DOMAIN}`) || Host(`localhost`)"
+      - "traefik.http.routers.app.entrypoints=websecure"
+      - "traefik.http.routers.app.service=backend@file"
+      - "traefik.http.routers.app.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.app.middlewares=security-headers@file"
 
   db:
     image: postgres:17-alpine

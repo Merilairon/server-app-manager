@@ -12,18 +12,21 @@ pub struct Config {
     pub compose_apps_dir: String,
     pub cookie_secure: bool,
     pub base_domain: String,
+    pub publish_app_ports: bool,
     pub docker_socket: Option<String>,
 }
 
 impl Config {
     pub fn from_env() -> Self {
+        let base_domain = env::var("BASE_DOMAIN")
+            .unwrap_or_else(|_| "app.local".to_string());
         Self {
             database_url: env::var("DATABASE_URL")
                 .unwrap_or_else(|_| "postgres://sam:sam@db:5432/sam".to_string()),
             jwt_secret: env::var("JWT_SECRET")
                 .unwrap_or_else(|_| "changeme-change-this-in-production".to_string()),
             cors_origin: env::var("CORS_ORIGIN")
-                .unwrap_or_else(|_| "https://app.example.com".to_string()),
+                .unwrap_or_else(|_| format!("https://{}", base_domain)),
             tenant_id: env::var("TENANT_ID")
                 .unwrap_or_else(|_| "appforge".to_string()),
             static_dir: env::var("STATIC_DIR")
@@ -32,12 +35,14 @@ impl Config {
                 .unwrap_or_else(|_| "admin".to_string()),
             admin_password: env::var("ADMIN_PASSWORD").ok(),
             compose_apps_dir: env::var("COMPOSE_APPS_DIR")
-                .unwrap_or_else(|_| "/data/apps".to_string()),
+                .unwrap_or_else(|_| "/data".to_string()),
             cookie_secure: env::var("COOKIE_SECURE")
                 .map(|v| v == "true")
                 .unwrap_or(false),
-            base_domain: env::var("BASE_DOMAIN")
-                .unwrap_or_else(|_| "app.example.com".to_string()),
+            base_domain,
+            publish_app_ports: env::var("PUBLISH_APP_PORTS")
+                .map(|v| v == "true")
+                .unwrap_or(false),
             docker_socket: env::var("DOCKER_SOCKET").ok(),
         }
     }

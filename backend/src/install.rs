@@ -124,6 +124,32 @@ pub async fn run(
     );
     service.insert("labels".to_string(), Value::Object(labels));
 
+    if !app.volumes.is_empty() {
+        service.insert(
+            "volumes".to_string(),
+            Value::Array(
+                app.volumes
+                    .iter()
+                    .map(|v| Value::String(v.clone()))
+                    .collect(),
+            ),
+        );
+    }
+
+    if config.publish_app_ports {
+        let host_ports: Vec<String> = app
+            .ports
+            .iter()
+            .filter_map(|p| p.host.map(|h| format!("{}:{}", h, p.container)))
+            .collect();
+        if !host_ports.is_empty() {
+            service.insert(
+                "ports".to_string(),
+                Value::Array(host_ports.iter().map(|p| Value::String(p.clone())).collect()),
+            );
+        }
+    }
+
     if let Some(hc) = &app.healthcheck {
         let mut h = serde_json::Map::new();
         h.insert(
@@ -173,11 +199,28 @@ pub async fn run(
     backend.insert("name".to_string(), Value::String(backend_network));
     networks.insert("backend".to_string(), Value::Object(backend));
 
-    let compose = serde_json::json!({
-        "name": project,
-        "services": services,
-        "networks": networks,
-    });
+    let mut top_volumes = serde_json::Map::new();
+    for v in &app.volumes {
+        if let Some(idx) = v.find(':') {
+            let name = &v[..idx];
+            if !name.is_empty()
+                && !name.contains('/')
+                && !name.contains('\\')
+                && !name.starts_with('.')
+            {
+                top_volumes.insert(name.to_string(), Value::Object(serde_json::Map::new()));
+            }
+        }
+    }
+
+    let mut compose = serde_json::Map::new();
+    compose.insert("name".to_string(), Value::String(project.clone()));
+    compose.insert("services".to_string(), Value::Object(services));
+    compose.insert("networks".to_string(), Value::Object(networks));
+    if !top_volumes.is_empty() {
+        compose.insert("volumes".to_string(), Value::Object(top_volumes));
+    }
+    let compose = Value::Object(compose);
 
     let compose_dir = enabled_dir.join(&app.slug);
     std::fs::create_dir_all(&compose_dir)
@@ -188,9 +231,8 @@ pub async fn run(
     std::fs::write(&compose_path, compose_yaml)
         .map_err(|e| AppError::internal(format!("write compose: {e}")))?;
 
-    let output = Command::new("docker")
+    let output = Command::new("docker-compose")
         .args([
-            "compose",
             "-p",
             &project,
             "-f",

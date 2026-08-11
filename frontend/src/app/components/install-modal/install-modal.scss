@@ -1,128 +1,63 @@
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-}
-
-.modal {
-  width: 90%;
-  max-width: 520px;
-  background: #0f1729;
-  border: 1px solid #1f2b45;
-  border-radius: 8px;
-  color: #e6ecf5;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem;
-  border-bottom: 1px solid #1f2b45;
-}
-
-.modal-header h2 {
-  margin: 0;
-  font-size: 1rem;
-}
-
-.modal-header .close {
-  background: transparent;
-  border: none;
-  color: #94a3b8;
-  font-size: 1.5rem;
-  cursor: pointer;
-}
-
-.modal-body {
-  padding: 1rem;
-}
-
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  margin-bottom: 1rem;
-  font-size: 0.875rem;
-}
-
-.field input {
-  padding: 0.5rem;
-  border: 1px solid #2a3a5c;
-  border-radius: 4px;
-  background: #0b1020;
-  color: #e6ecf5;
+.modal__body h3 {
+  margin: 0 0 16px;
+  font-size: 14px;
 }
 
 .required {
-  color: #ef4444;
+  color: var(--bad);
 }
 
 .error {
-  color: #ef4444;
+  color: var(--bad);
 }
 
 .success {
-  color: #22c55e;
+  color: var(--ok);
 }
 
-h3 {
-  margin: 0 0 1rem;
-  font-size: 1rem;
+.loading {
+  color: var(--text-muted);
 }
 
 .review-list {
-  margin: 0 0 1rem;
+  margin: 0 0 16px;
 }
 
 .review-row {
   display: flex;
   justify-content: space-between;
-  padding: 0.5rem 0;
-  border-bottom: 1px solid #1f2b45;
-  font-size: 0.875rem;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
 }
 
 .review-row dt {
-  color: #94a3b8;
+  color: var(--text-muted);
+  margin: 0;
 }
 
 .review-row dd {
   margin: 0;
-  color: #e6ecf5;
+  color: var(--text);
+  font-weight: 500;
 }
 
 .checkbox-field {
-  flex-direction: row;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.modal-actions {
   display: flex;
-  justify-content: flex-end;
-  margin-top: 1rem;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
 }
 
-.modal-actions.split {
-  justify-content: space-between;
+.checkbox-field input {
+  width: auto;
 }
 
-.modal-actions button,
-.modal-body button {
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 4px;
-  background: #3b82f6;
-  color: white;
-  cursor: pointer;
+.checkbox-field label {
+  margin: 0;
 }
 
-.modal-actions button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+.mono {
+  font-family: var(--mono);
+  word-break: break-all;
 }

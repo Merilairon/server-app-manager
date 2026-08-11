@@ -26,7 +26,7 @@ services:
       [
         "/bin/sh",
         "-c",
-        "find /app/backend/target -mindepth 1 -delete 2>/dev/null || true; exec cargo watch -x run",
+        "find /app/backend/target -mindepth 1 -delete 2>/dev/null || true; exec cargo watch --poll -x run",
       ]
     env_file:
       - path: .env.dev
@@ -54,6 +54,8 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       # Mount RBAC roles definition.
       - ./roles:/app/backend/roles:ro
+      # Make the app catalog (store/enabled/disabled) available to the backend.
+      - ./apps:/data/apps
     networks:
       - dev
     mem_limit: 1g
@@ -114,7 +116,7 @@ services:
 
 networks:
   dev:
-    name: ${TENANT_ID:-appforge}_dev
+    name: ${TENANT_ID:-appforge}_backend
     internal: false
 
 volumes:

@@ -19,9 +19,8 @@ pub async fn run(config: &Config, slug: &str) -> Result<Value, AppError> {
     let compose_file = compose_dir.join("docker-compose.yml");
 
     if compose_file.exists() {
-        let output = Command::new("docker")
+        let output = Command::new("docker-compose")
             .args([
-                "compose",
                 "-p",
                 &project,
                 "-f",

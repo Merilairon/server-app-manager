@@ -213,8 +213,8 @@ graph TB
     Internet --> Traefik
 
     subgraph "Traefik"
-        RouterMain[Router: app.example.com]
-        RouterApi[Router: app.example.com /api/v1]
+        RouterMain[Router: app.local]
+        RouterApi[Router: app.local /api/v1]
         RouterAppA[Router: app-a.example.com]
         RouterAppB[Router: app-b.example.com]
     end
