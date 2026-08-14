@@ -1,0 +1,11 @@
+name: NocoDB
+slug: nocodb
+description: Turns any database into a smart spreadsheet with a no-code app builder UI.
+category: DevOps
+image: nocodb/nocodb:latest
+service: nocodb
+ports:
+  - container: 8080
+volumes:
+  - nocodb_data:/usr/app/data
+restart: unless-stopped

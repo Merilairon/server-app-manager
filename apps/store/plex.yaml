@@ -1,0 +1,19 @@
+name: Plex
+slug: plex
+description: Media server for organizing and streaming movies, TV shows, and music.
+category: Media
+image: plexinc/pms-docker:latest
+service: plex
+env:
+  TZ: UTC
+placeholders:
+  - name: PLEX_CLAIM
+    type: string
+    label: Plex claim token (from plex.tv/claim)
+    required: false
+ports:
+  - container: 32400
+volumes:
+  - plex_config:/config
+  - plex_media:/media
+restart: unless-stopped

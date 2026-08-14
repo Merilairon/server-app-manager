@@ -1,0 +1,12 @@
+name: File Browser
+slug: filebrowser
+description: Web-based file manager for browsing, uploading, and sharing files.
+category: Productivity
+image: filebrowser/filebrowser:latest
+service: filebrowser
+ports:
+  - container: 80
+volumes:
+  - filebrowser_srv:/srv
+  - filebrowser_db:/database
+restart: unless-stopped

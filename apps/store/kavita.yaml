@@ -1,0 +1,14 @@
+name: Kavita
+slug: kavita
+description: Fast, feature-rich reading server for manga, comics, and e-books.
+category: Media
+image: kizaing/kavita:latest
+service: kavita
+env:
+  TZ: UTC
+ports:
+  - container: 5000
+volumes:
+  - kavita_config:/kavita/config
+  - kavita_library:/manga
+restart: unless-stopped

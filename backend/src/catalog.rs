@@ -56,6 +56,20 @@ pub struct ResourceLimits {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct ExtraService {
+    pub name: String,
+    pub image: String,
+    #[serde(default)]
+    pub environment: HashMap<String, String>,
+    #[serde(default)]
+    pub volumes: Vec<String>,
+    pub healthcheck: Option<Healthcheck>,
+    #[serde(default = "default_restart")]
+    pub restart: String,
+    pub command: Option<Vec<String>>,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct AppDefinition {
     pub name: String,
     pub slug: String,
@@ -77,6 +91,9 @@ pub struct AppDefinition {
     #[serde(default)]
     pub placeholders: Vec<Placeholder>,
     pub resource_limits: Option<ResourceLimits>,
+    pub command: Option<Vec<String>>,
+    #[serde(default)]
+    pub extra_services: Vec<ExtraService>,
     #[serde(default)]
     pub status: String,
 }
@@ -220,5 +237,108 @@ placeholders:
         let (config, _base) = temp_config();
         let base = Catalog::base_dir(&config);
         assert!(base.join("apps/store").exists());
+    }
+
+    fn temp_config_with_extra_services() -> (Config, std::path::PathBuf) {
+        let base = std::env::temp_dir().join(format!("catalog-{}-extra", uuid::Uuid::new_v4()));
+        std::fs::create_dir_all(base.join("apps/store")).unwrap();
+        std::fs::write(
+            base.join("apps/store/multiapp.yaml"),
+            r#"name: Multi App
+slug: multiapp
+description: An app with a private database and a remote-support relay
+category: Office
+image: example/app:latest
+service: app
+command: ["hbbs"]
+ports:
+  - container: 80
+extra_services:
+  - name: db
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_PASSWORD: changeme
+    volumes:
+      - multiapp_db:/var/lib/postgresql/data
+    healthcheck:
+      test: "pg_isready -U postgres"
+  - name: relay
+    image: example/app:latest
+    command: ["hbbrs"]
+"#,
+        )
+        .unwrap();
+        (
+            Config {
+                database_url: "postgres://test".to_string(),
+                jwt_secret: "test".to_string(),
+                cors_origin: "*".to_string(),
+                tenant_id: "test".to_string(),
+                static_dir: "static".to_string(),
+                admin_username: "admin".to_string(),
+                admin_password: None,
+                compose_apps_dir: base.to_str().unwrap().to_string(),
+                cookie_secure: false,
+                base_domain: "app.local".to_string(),
+                publish_app_ports: false,
+                docker_socket: None,
+            },
+            base,
+        )
+    }
+
+    #[test]
+    fn loads_app_with_extra_services_and_command() {
+        let (config, _base) = temp_config_with_extra_services();
+        let catalog = Catalog::load(&config).unwrap();
+        let app = catalog.get("multiapp").unwrap();
+        assert_eq!(app.command, Some(vec!["hbbs".to_string()]));
+        assert_eq!(app.extra_services.len(), 2);
+
+        let db = app.extra_services.iter().find(|s| s.name == "db").unwrap();
+        assert_eq!(db.image, "postgres:17-alpine");
+        assert_eq!(db.volumes, vec!["multiapp_db:/var/lib/postgresql/data".to_string()]);
+        assert!(db.healthcheck.is_some());
+
+        let relay = app
+            .extra_services
+            .iter()
+            .find(|s| s.name == "relay")
+            .unwrap();
+        assert_eq!(relay.command, Some(vec!["hbbrs".to_string()]));
+    }
+
+    #[test]
+    fn loads_real_apps_store_directory() {
+        // CARGO_MANIFEST_DIR is backend/, so the repo root (containing apps/store) is its parent.
+        let repo_root = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .unwrap()
+            .to_path_buf();
+        let config = Config {
+            database_url: "postgres://test".to_string(),
+            jwt_secret: "test".to_string(),
+            cors_origin: "*".to_string(),
+            tenant_id: "test".to_string(),
+            static_dir: "static".to_string(),
+            admin_username: "admin".to_string(),
+            admin_password: None,
+            compose_apps_dir: repo_root.to_str().unwrap().to_string(),
+            cookie_secure: false,
+            base_domain: "app.local".to_string(),
+            publish_app_ports: false,
+            docker_socket: None,
+        };
+        let catalog = Catalog::load(&config).expect("real apps/store catalog should parse");
+        assert!(
+            catalog.apps.len() >= 69,
+            "expected at least 69 store apps, got {}",
+            catalog.apps.len()
+        );
+        for app in &catalog.apps {
+            assert!(!app.name.is_empty());
+            assert!(!app.slug.is_empty());
+            assert!(!app.image.is_empty());
+        }
     }
 }

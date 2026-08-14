@@ -1,0 +1,17 @@
+name: Grafana
+slug: grafana
+description: Analytics and interactive visualization dashboards for metrics and logs.
+category: Monitoring
+image: grafana/grafana:latest
+service: grafana
+placeholders:
+  - name: GF_SECURITY_ADMIN_PASSWORD
+    type: secret
+    label: Admin password
+    required: true
+    default: "changeme"
+ports:
+  - container: 3000
+volumes:
+  - grafana_data:/var/lib/grafana
+restart: unless-stopped

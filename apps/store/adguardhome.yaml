@@ -1,0 +1,12 @@
+name: AdGuard Home
+slug: adguardhome
+description: Network-wide ad and tracker blocking DNS server with a web dashboard.
+category: Security
+image: adguard/adguardhome:latest
+service: adguardhome
+ports:
+  - container: 3000
+volumes:
+  - adguardhome_work:/opt/adguardhome/work
+  - adguardhome_conf:/opt/adguardhome/conf
+restart: unless-stopped

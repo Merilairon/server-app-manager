@@ -1,0 +1,13 @@
+name: Audiobookshelf
+slug: audiobookshelf
+description: Self-hosted server for managing and streaming audiobooks and podcasts.
+category: Media
+image: ghcr.io/advplyr/audiobookshelf:latest
+service: audiobookshelf
+ports:
+  - container: 80
+volumes:
+  - audiobookshelf_config:/config
+  - audiobookshelf_metadata:/metadata
+  - audiobookshelf_media:/audiobooks
+restart: unless-stopped

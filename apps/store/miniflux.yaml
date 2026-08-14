@@ -1,0 +1,31 @@
+name: Miniflux
+slug: miniflux
+description: Minimalist, fast RSS feed reader, with its own private database.
+category: Productivity
+image: miniflux/miniflux:latest
+service: miniflux
+placeholders:
+  - name: ADMIN_PASSWORD
+    type: secret
+    label: Admin password
+    required: true
+    default: "changeme123"
+env:
+  DATABASE_URL: postgres://miniflux:miniflux-db-changeme@db/miniflux?sslmode=disable
+  RUN_MIGRATIONS: "1"
+  CREATE_ADMIN: "1"
+  ADMIN_USERNAME: admin
+ports:
+  - container: 8080
+restart: unless-stopped
+extra_services:
+  - name: db
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: miniflux
+      POSTGRES_PASSWORD: miniflux-db-changeme
+      POSTGRES_DB: miniflux
+    volumes:
+      - miniflux_db:/var/lib/postgresql/data
+    healthcheck:
+      test: "pg_isready -U miniflux"

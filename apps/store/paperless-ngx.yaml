@@ -1,0 +1,48 @@
+name: Paperless-ngx
+slug: paperless-ngx
+description: Document management and OCR system for scanning, tagging, and archiving office paperwork, with its own private database and task broker.
+category: Office
+image: paperlessngx/paperless-ngx:latest
+service: paperless-ngx
+placeholders:
+  - name: PAPERLESS_SECRET_KEY
+    type: secret
+    label: Application secret key
+    required: true
+    default: "changeme-secret-key"
+  - name: PAPERLESS_ADMIN_PASSWORD
+    type: secret
+    label: Admin password
+    required: true
+    default: "changeme"
+env:
+  PAPERLESS_ADMIN_USER: admin
+  PAPERLESS_URL: "http://localhost:8000"
+  PAPERLESS_DBHOST: db
+  PAPERLESS_DBNAME: paperless
+  PAPERLESS_DBUSER: paperless
+  PAPERLESS_DBPASS: paperless-db-changeme
+  PAPERLESS_REDIS: "redis://broker:6379"
+ports:
+  - container: 8000
+volumes:
+  - paperless-ngx_data:/usr/src/paperless/data
+  - paperless-ngx_media:/usr/src/paperless/media
+  - paperless-ngx_export:/usr/src/paperless/export
+  - paperless-ngx_consume:/usr/src/paperless/consume
+restart: unless-stopped
+extra_services:
+  - name: db
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: paperless
+      POSTGRES_PASSWORD: paperless-db-changeme
+      POSTGRES_DB: paperless
+    volumes:
+      - paperless-ngx_db:/var/lib/postgresql/data
+    healthcheck:
+      test: "pg_isready -U paperless"
+  - name: broker
+    image: redis:alpine
+    volumes:
+      - paperless-ngx_broker:/data

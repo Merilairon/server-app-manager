@@ -1,0 +1,27 @@
+name: Easy!Appointments
+slug: easyappointments
+description: Open-source appointment scheduling and booking system for offices and clinics, with its own private database.
+category: Office
+image: alextselegidis/easyappointments:latest
+service: easyappointments
+env:
+  BASE_URL: "http://localhost"
+  DB_HOST: db
+  DB_NAME: easyappointments
+  DB_USERNAME: easyappointments
+  DB_PASSWORD: easyappointments-db-changeme
+ports:
+  - container: 80
+volumes:
+  - easyappointments_storage:/var/www/html/storage
+restart: unless-stopped
+extra_services:
+  - name: db
+    image: mysql:8
+    environment:
+      MYSQL_ROOT_PASSWORD: easyappointments-root-changeme
+      MYSQL_DATABASE: easyappointments
+      MYSQL_USER: easyappointments
+      MYSQL_PASSWORD: easyappointments-db-changeme
+    volumes:
+      - easyappointments_db:/var/lib/mysql

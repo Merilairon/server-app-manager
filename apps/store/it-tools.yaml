@@ -1,0 +1,9 @@
+name: IT-Tools
+slug: it-tools
+description: Collection of handy online tools for developers and IT professionals.
+category: DevOps
+image: corentinth/it-tools:latest
+service: it-tools
+ports:
+  - container: 80
+restart: unless-stopped

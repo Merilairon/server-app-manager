@@ -1,0 +1,11 @@
+name: Homepage
+slug: homepage
+description: Modern, fast, and highly customizable application dashboard.
+category: Monitoring
+image: ghcr.io/gethomepage/homepage:latest
+service: homepage
+volumes:
+  - homepage_config:/app/config
+ports:
+  - container: 3000
+restart: unless-stopped

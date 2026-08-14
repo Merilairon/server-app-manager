@@ -1,0 +1,18 @@
+name: RustDesk Server
+slug: rustdesk
+description: Self-hosted remote desktop signaling (hbbs) and relay (hbbrs) server for IT remote support.
+category: Office
+image: rustdesk/rustdesk-server:latest
+service: hbbs
+command: ["hbbs"]
+ports:
+  - container: 21116
+volumes:
+  - rustdesk_data:/root
+restart: unless-stopped
+extra_services:
+  - name: hbbrs
+    image: rustdesk/rustdesk-server:latest
+    command: ["hbbrs"]
+    volumes:
+      - rustdesk_data:/root

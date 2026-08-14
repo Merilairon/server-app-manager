@@ -79,6 +79,13 @@ pub async fn run(
 
     let mut labels = serde_json::Map::new();
     labels.insert("traefik.enable".to_string(), Value::String("true".to_string()));
+    // Every app container joins both `app_network` and `backend`; without this label
+    // Traefik's docker provider can non-deterministically pick the wrong network IP
+    // (including one it isn't even attached to), leaving the app unreachable.
+    labels.insert(
+        "traefik.docker.network".to_string(),
+        Value::String(backend_network.clone()),
+    );
     labels.insert(
         format!("traefik.http.routers.{}.rule", app.slug),
         Value::String(format!("Host(`{}.{}`)", app.slug, config.base_domain)),
@@ -136,6 +143,13 @@ pub async fn run(
         );
     }
 
+    if let Some(cmd) = &app.command {
+        service.insert(
+            "command".to_string(),
+            Value::Array(cmd.iter().map(|c| Value::String(c.clone())).collect()),
+        );
+    }
+
     if config.publish_app_ports {
         let host_ports: Vec<String> = app
             .ports
@@ -188,6 +202,69 @@ pub async fn run(
     let mut services = serde_json::Map::new();
     services.insert(service_name.to_string(), Value::Object(service));
 
+    for extra in &app.extra_services {
+        let mut extra_service = serde_json::Map::new();
+        extra_service.insert("image".to_string(), Value::String(extra.image.clone()));
+        extra_service.insert(
+            "container_name".to_string(),
+            Value::String(format!("{}_{}_{}", config.tenant_id, app.slug, extra.name)),
+        );
+        extra_service.insert("restart".to_string(), Value::String(extra.restart.clone()));
+        extra_service.insert(
+            "environment".to_string(),
+            Value::Object(serde_json::Map::from_iter(
+                extra
+                    .environment
+                    .iter()
+                    .map(|(k, v)| (k.clone(), Value::String(v.clone()))),
+            )),
+        );
+        extra_service.insert(
+            "networks".to_string(),
+            Value::Array(vec![Value::String("app_network".to_string())]),
+        );
+
+        if !extra.volumes.is_empty() {
+            extra_service.insert(
+                "volumes".to_string(),
+                Value::Array(
+                    extra
+                        .volumes
+                        .iter()
+                        .map(|v| Value::String(v.clone()))
+                        .collect(),
+                ),
+            );
+        }
+
+        if let Some(cmd) = &extra.command {
+            extra_service.insert(
+                "command".to_string(),
+                Value::Array(cmd.iter().map(|c| Value::String(c.clone())).collect()),
+            );
+        }
+
+        if let Some(hc) = &extra.healthcheck {
+            let mut h = serde_json::Map::new();
+            h.insert(
+                "test".to_string(),
+                Value::Array(vec![
+                    Value::String("CMD-SHELL".to_string()),
+                    Value::String(hc.test.clone()),
+                ]),
+            );
+            h.insert("interval".to_string(), Value::String(hc.interval.clone()));
+            h.insert("timeout".to_string(), Value::String(hc.timeout.clone()));
+            h.insert(
+                "retries".to_string(),
+                Value::Number(serde_json::Number::from(hc.retries as i64)),
+            );
+            extra_service.insert("healthcheck".to_string(), Value::Object(h));
+        }
+
+        services.insert(extra.name.clone(), Value::Object(extra_service));
+    }
+
     let mut networks = serde_json::Map::new();
     let mut app_net = serde_json::Map::new();
     app_net.insert("driver".to_string(), Value::String("bridge".to_string()));
@@ -200,7 +277,11 @@ pub async fn run(
     networks.insert("backend".to_string(), Value::Object(backend));
 
     let mut top_volumes = serde_json::Map::new();
-    for v in &app.volumes {
+    let all_volumes = app
+        .volumes
+        .iter()
+        .chain(app.extra_services.iter().flat_map(|s| s.volumes.iter()));
+    for v in all_volumes {
         if let Some(idx) = v.find(':') {
             let name = &v[..idx];
             if !name.is_empty()
@@ -290,4 +371,164 @@ async fn wait_healthy(container_name: &str, has_healthcheck: bool) -> Result<boo
         sleep(Duration::from_secs(2)).await;
     }
     Ok(false)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::catalog::{ExtraService, Healthcheck, Port};
+    use std::os::unix::fs::PermissionsExt;
+    use std::sync::Mutex;
+
+    // `render_compose_for` mutates the process-wide PATH env var, so tests using it
+    // must not run concurrently with each other.
+    static PATH_LOCK: Mutex<()> = Mutex::new(());
+
+    /// Installs fake `docker`/`docker-compose` binaries on PATH so `install::run`
+    /// can execute end-to-end without a real Docker daemon, then returns the
+    /// rendered docker-compose.yml contents for inspection.
+    async fn render_compose_for(app: &AppDefinition) -> serde_yaml::Value {
+        let _guard = PATH_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+
+        let fake_bin = std::env::temp_dir().join(format!("fake-bin-{}", uuid::Uuid::new_v4()));
+        std::fs::create_dir_all(&fake_bin).unwrap();
+
+        let docker_compose_script = fake_bin.join("docker-compose");
+        std::fs::write(&docker_compose_script, "#!/bin/sh\nexit 0\n").unwrap();
+        std::fs::set_permissions(&docker_compose_script, std::fs::Permissions::from_mode(0o755))
+            .unwrap();
+
+        let docker_script = fake_bin.join("docker");
+        std::fs::write(&docker_script, "#!/bin/sh\necho running\nexit 0\n").unwrap();
+        std::fs::set_permissions(&docker_script, std::fs::Permissions::from_mode(0o755)).unwrap();
+
+        let old_path = std::env::var("PATH").unwrap_or_default();
+        unsafe {
+            std::env::set_var("PATH", format!("{}:{}", fake_bin.display(), old_path));
+        }
+
+        let base = std::env::temp_dir().join(format!("install-test-{}", uuid::Uuid::new_v4()));
+        // Catalog::base_dir() only trusts compose_apps_dir if `apps/store` exists under
+        // it; otherwise it falls back to CWD-relative lookups, which would hit this
+        // repo's real apps/store. Create the (empty) marker dir to pin it to our temp dir.
+        std::fs::create_dir_all(base.join("apps/store")).unwrap();
+        let config = Config {
+            database_url: "postgres://test".to_string(),
+            jwt_secret: "test".to_string(),
+            cors_origin: "*".to_string(),
+            tenant_id: "test".to_string(),
+            static_dir: "static".to_string(),
+            admin_username: "admin".to_string(),
+            admin_password: None,
+            compose_apps_dir: base.to_str().unwrap().to_string(),
+            cookie_secure: false,
+            base_domain: "app.local".to_string(),
+            publish_app_ports: false,
+            docker_socket: None,
+        };
+
+        run(&config, app, &HashMap::new()).await.unwrap();
+
+        unsafe {
+            std::env::set_var("PATH", old_path);
+        }
+
+        let compose_path = base
+            .join("apps/enabled")
+            .join(&app.slug)
+            .join("docker-compose.yml");
+        let contents = std::fs::read_to_string(&compose_path).unwrap();
+        serde_yaml::from_str(&contents).unwrap()
+    }
+
+    fn networks_of(compose: &serde_yaml::Value, service: &str) -> Vec<String> {
+        compose["services"][service]["networks"]
+            .as_sequence()
+            .unwrap()
+            .iter()
+            .map(|v| v.as_str().unwrap().to_string())
+            .collect()
+    }
+
+    #[tokio::test]
+    async fn main_service_joins_app_network_and_backend() {
+        let app = AppDefinition {
+            name: "Nextcloud Test".to_string(),
+            slug: "nextcloud-test".to_string(),
+            image: "nextcloud:apache".to_string(),
+            service: Some("nextcloud-test".to_string()),
+            ports: vec![Port {
+                host: None,
+                container: 80,
+            }],
+            extra_services: vec![ExtraService {
+                name: "db".to_string(),
+                image: "mariadb:11".to_string(),
+                healthcheck: Some(Healthcheck {
+                    test: "healthcheck.sh --connect".to_string(),
+                    ..Default::default()
+                }),
+                restart: "unless-stopped".to_string(),
+                ..Default::default()
+            }],
+            restart: "unless-stopped".to_string(),
+            ..Default::default()
+        };
+
+        let compose = render_compose_for(&app).await;
+        assert_eq!(networks_of(&compose, "nextcloud-test"), vec!["app_network", "backend"]);
+        assert_eq!(networks_of(&compose, "db"), vec!["app_network"]);
+        assert!(compose["services"]["db"]["healthcheck"].is_mapping());
+        assert_eq!(
+            compose["services"]["nextcloud-test"]["labels"]["traefik.docker.network"]
+                .as_str()
+                .unwrap(),
+            "test_backend"
+        );
+    }
+
+    #[tokio::test]
+    async fn command_is_rendered_for_main_and_extra_services() {
+        let app = AppDefinition {
+            name: "RustDesk Test".to_string(),
+            slug: "rustdesk-test".to_string(),
+            image: "rustdesk/rustdesk-server:latest".to_string(),
+            service: Some("hbbs".to_string()),
+            command: Some(vec!["hbbs".to_string()]),
+            ports: vec![Port {
+                host: None,
+                container: 21116,
+            }],
+            extra_services: vec![ExtraService {
+                name: "hbbrs".to_string(),
+                image: "rustdesk/rustdesk-server:latest".to_string(),
+                command: Some(vec!["hbbrs".to_string()]),
+                restart: "unless-stopped".to_string(),
+                ..Default::default()
+            }],
+            restart: "unless-stopped".to_string(),
+            ..Default::default()
+        };
+
+        let compose = render_compose_for(&app).await;
+        assert_eq!(
+            compose["services"]["hbbs"]["command"]
+                .as_sequence()
+                .unwrap()
+                .iter()
+                .map(|v| v.as_str().unwrap())
+                .collect::<Vec<_>>(),
+            vec!["hbbs"]
+        );
+        assert_eq!(
+            compose["services"]["hbbrs"]["command"]
+                .as_sequence()
+                .unwrap()
+                .iter()
+                .map(|v| v.as_str().unwrap())
+                .collect::<Vec<_>>(),
+            vec!["hbbrs"]
+        );
+        assert_eq!(networks_of(&compose, "hbbrs"), vec!["app_network"]);
+    }
 }

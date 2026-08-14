@@ -1,0 +1,11 @@
+name: Dozzle
+slug: dozzle
+description: Real-time log viewer for Docker containers with a clean web UI.
+category: Monitoring
+image: amir20/dozzle:latest
+service: dozzle
+volumes:
+  - /var/run/docker.sock:/var/run/docker.sock:ro
+ports:
+  - container: 8080
+restart: unless-stopped

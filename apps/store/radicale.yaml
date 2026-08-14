@@ -1,0 +1,11 @@
+name: Radicale
+slug: radicale
+description: Lightweight CalDAV and CardDAV server for shared office calendars and contacts.
+category: Office
+image: tomsquest/docker-radicale:latest
+service: radicale
+ports:
+  - container: 5232
+volumes:
+  - radicale_data:/data
+restart: unless-stopped

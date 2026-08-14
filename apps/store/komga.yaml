@@ -1,0 +1,14 @@
+name: Komga
+slug: komga
+description: Media server for comics, manga, and digital books.
+category: Media
+image: gotson/komga:latest
+service: komga
+env:
+  TZ: UTC
+ports:
+  - container: 8080
+volumes:
+  - komga_config:/config
+  - komga_library:/data
+restart: unless-stopped

@@ -1,0 +1,26 @@
+name: WordPress
+slug: wordpress
+description: Popular content management system for building websites and blogs, with its own private database.
+category: Productivity
+image: wordpress:latest
+service: wordpress
+env:
+  WORDPRESS_DB_HOST: db
+  WORDPRESS_DB_NAME: wordpress
+  WORDPRESS_DB_USER: wordpress
+  WORDPRESS_DB_PASSWORD: wordpress-db-changeme
+ports:
+  - container: 80
+volumes:
+  - wordpress_data:/var/www/html
+restart: unless-stopped
+extra_services:
+  - name: db
+    image: mysql:8
+    environment:
+      MYSQL_ROOT_PASSWORD: wordpress-root-changeme
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: wordpress-db-changeme
+    volumes:
+      - wordpress_db:/var/lib/mysql

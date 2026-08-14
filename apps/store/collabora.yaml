@@ -1,0 +1,19 @@
+name: Collabora Online
+slug: collabora
+description: Online office document editor backend (pairs with Nextcloud or other WOPI clients).
+category: Office
+image: collabora/code:latest
+service: collabora
+placeholders:
+  - name: PASSWORD
+    type: secret
+    label: Admin console password
+    required: true
+    default: "changeme"
+env:
+  username: admin
+  aliasgroup1: "http://localhost:443"
+  extra_params: "--o:ssl.enable=false"
+ports:
+  - container: 9980
+restart: unless-stopped

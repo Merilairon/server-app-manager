@@ -23,7 +23,15 @@ providers:
     watch: true
   docker:
     exposedByDefault: false
-    network: "${TENANT_ID:-appforge}_backend"
+    # NOTE: Traefik does NOT interpolate ${VAR} placeholders in its static
+    # configuration file (only the dynamic file/label config supports that via
+    # `{{env "VAR"}}` templating). This must match TENANT_ID's actual value
+    # (default "appforge") or be kept in sync manually if TENANT_ID changes.
+    # Every container that Traefik routes to also sets the `traefik.docker.network`
+    # label explicitly (see docker-compose.yml / install.rs), which takes
+    # precedence over this default and is what actually makes routing correct
+    # for containers attached to more than one network.
+    network: "appforge_backend"
 
 api:
   dashboard: false
@@ -31,10 +39,12 @@ api:
 # ACME / Let's Encrypt.
 # Staging by default to avoid rate limits during development.
 # Set ACME_PRODUCTION=true in .env to use the production ACME server.
+# NOTE: like `network` above, this email is a literal default (not interpolated
+# from ACME_EMAIL) because Traefik doesn't support env substitution here.
 certificatesResolvers:
   letsencrypt:
     acme:
-      email: "${ACME_EMAIL:-admin@example.com}"
+      email: "admin@example.com"
       storage: "/acme/acme.json"
       caServer: "https://acme-staging-v02.api.letsencrypt.org/directory"
       httpChallenge:

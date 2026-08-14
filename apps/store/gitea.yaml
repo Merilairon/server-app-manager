@@ -1,0 +1,15 @@
+name: Gitea
+slug: gitea
+description: Lightweight, self-hosted Git service with issues, PRs, and CI integration.
+category: DevOps
+image: gitea/gitea:latest
+service: gitea
+env:
+  USER_UID: "1000"
+  USER_GID: "1000"
+  GITEA__database__DB_TYPE: sqlite3
+ports:
+  - container: 3000
+volumes:
+  - gitea_data:/data
+restart: unless-stopped

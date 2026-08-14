@@ -1,0 +1,36 @@
+name: Docmost
+slug: docmost
+description: Open-source collaborative documentation and wiki platform, with its own private database.
+category: Office
+image: docmost/docmost:latest
+service: docmost
+placeholders:
+  - name: APP_SECRET
+    type: secret
+    label: Application secret
+    required: true
+    default: "changeme-app-secret"
+env:
+  APP_URL: "http://localhost:3000"
+  DATABASE_URL: "postgresql://docmost:docmost-db-changeme@db:5432/docmost?schema=public"
+  REDIS_URL: "redis://broker:6379"
+ports:
+  - container: 3000
+volumes:
+  - docmost_data:/app/data/storage
+restart: unless-stopped
+extra_services:
+  - name: db
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: docmost
+      POSTGRES_PASSWORD: docmost-db-changeme
+      POSTGRES_DB: docmost
+    volumes:
+      - docmost_db:/var/lib/postgresql/data
+    healthcheck:
+      test: "pg_isready -U docmost"
+  - name: broker
+    image: redis:alpine
+    volumes:
+      - docmost_broker:/data

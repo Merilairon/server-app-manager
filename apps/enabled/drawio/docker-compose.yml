@@ -1,0 +1,24 @@
+name: appforge_drawio
+networks:
+  app_network:
+    driver: bridge
+    name: appforge_drawio
+  backend:
+    external: true
+    name: appforge_backend
+services:
+  drawio:
+    container_name: appforge_drawio
+    environment: {}
+    image: jgraph/drawio:latest
+    labels:
+      traefik.docker.network: appforge_backend
+      traefik.enable: 'true'
+      traefik.http.routers.drawio.entrypoints: websecure
+      traefik.http.routers.drawio.rule: Host(`drawio.app.local`)
+      traefik.http.routers.drawio.tls.certresolver: letsencrypt
+      traefik.http.services.drawio.loadbalancer.server.port: 8080
+    networks:
+    - app_network
+    - backend
+    restart: unless-stopped

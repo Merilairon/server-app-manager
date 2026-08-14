@@ -1,0 +1,19 @@
+name: Stash
+slug: stash
+description: Media organizer for managing and tagging a self-hosted media collection.
+category: Media
+image: stashapp/stash:latest
+service: stash
+env:
+  STASH_STASH: /data/
+  STASH_GENERATED: /generated/
+  STASH_METADATA: /metadata/
+  STASH_CACHE: /cache/
+ports:
+  - container: 9999
+volumes:
+  - stash_data:/data
+  - stash_metadata:/metadata
+  - stash_cache:/cache
+  - stash_generated:/generated
+restart: unless-stopped

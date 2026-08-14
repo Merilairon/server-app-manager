@@ -1,0 +1,11 @@
+name: Prometheus
+slug: prometheus
+description: Time-series database and monitoring system for metrics collection and alerting.
+category: Monitoring
+image: prom/prometheus:latest
+service: prometheus
+ports:
+  - container: 9090
+volumes:
+  - prometheus_data:/prometheus
+restart: unless-stopped

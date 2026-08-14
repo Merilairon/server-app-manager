@@ -1,0 +1,11 @@
+name: Node-RED
+slug: node-red
+description: Flow-based visual programming tool for wiring together devices, APIs, and services.
+category: DevOps
+image: nodered/node-red:latest
+service: node-red
+ports:
+  - container: 1880
+volumes:
+  - node-red_data:/data
+restart: unless-stopped

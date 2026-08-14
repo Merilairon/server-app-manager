@@ -4,11 +4,18 @@
 #   - db:         Postgres 17 (persistent dev data)
 #   - backend:    Rust/axum with cargo-watch (recompiles on save)
 #   - frontend:   Angular dev server with HMR (ng serve --hmr)
+#   - traefik:    Reverse proxy so installed store apps are reachable at
+#                 https://<slug>.<BASE_DOMAIN> (default: app.local), matching
+#                 the production topology.
 #
-# No Traefik in dev — access the services directly:
+# Access the services directly:
 #   - Frontend (HMR):  http://localhost:4200  (proxies /api → backend)
 #   - Backend API:     http://localhost:8080
 #   - Postgres:        localhost:5432
+#   - Installed apps:  https://<slug>.app.local (add entries to /etc/hosts
+#                       pointing at 127.0.0.1; expect a self-signed cert
+#                       warning since app.local isn't a real ACME-verifiable
+#                       domain)
 #
 # Usage:
 #   docker compose -f docker-compose.dev.yml --env-file .env.dev up
@@ -92,6 +99,26 @@ services:
     cpus: 0.5
     restart: unless-stopped
 
+  traefik:
+    image: traefik:v3.7
+    container_name: ${TENANT_ID:-appforge}_dev_traefik
+    command:
+      - "--configFile=/etc/traefik/traefik.yml"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik:/etc/traefik:ro
+      - traefik_acme_dev:/acme
+    networks:
+      - dev
+    mem_limit: 128m
+    cpus: 0.25
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=false"
+
   db:
     image: postgres:17-alpine
     container_name: ${TENANT_ID:-appforge}_dev_db
@@ -126,3 +153,5 @@ volumes:
     name: ${TENANT_ID:-appforge}_dev_cargo_registry
   pg_data_dev:
     name: ${TENANT_ID:-appforge}_dev_pg_data
+  traefik_acme_dev:
+    name: ${TENANT_ID:-appforge}_dev_traefik_acme

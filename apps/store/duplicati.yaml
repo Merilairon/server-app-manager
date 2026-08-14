@@ -1,0 +1,17 @@
+name: Duplicati
+slug: duplicati
+description: Backup client that securely stores encrypted, incremental backups.
+category: Productivity
+image: linuxserver/duplicati:latest
+service: duplicati
+env:
+  PUID: "1000"
+  PGID: "1000"
+  TZ: UTC
+ports:
+  - container: 8200
+volumes:
+  - duplicati_config:/config
+  - duplicati_backups:/backups
+  - duplicati_source:/source
+restart: unless-stopped

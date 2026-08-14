@@ -1,0 +1,28 @@
+name: Ghost
+slug: ghost
+description: Modern, self-hosted publishing platform for blogs and newsletters, with its own private database.
+category: Productivity
+image: ghost:5
+service: ghost
+env:
+  url: http://localhost
+  database__client: mysql
+  database__connection__host: db
+  database__connection__user: ghost
+  database__connection__password: ghost-db-changeme
+  database__connection__database: ghost
+ports:
+  - container: 2368
+volumes:
+  - ghost_content:/var/lib/ghost/content
+restart: unless-stopped
+extra_services:
+  - name: db
+    image: mysql:8
+    environment:
+      MYSQL_ROOT_PASSWORD: ghost-root-changeme
+      MYSQL_DATABASE: ghost
+      MYSQL_USER: ghost
+      MYSQL_PASSWORD: ghost-db-changeme
+    volumes:
+      - ghost_db:/var/lib/mysql

@@ -1,0 +1,17 @@
+name: Vaultwarden
+slug: vaultwarden
+description: Lightweight, self-hosted Bitwarden-compatible password manager server.
+category: Security
+image: vaultwarden/server:latest
+service: vaultwarden
+placeholders:
+  - name: ADMIN_TOKEN
+    type: secret
+    label: Admin panel token
+    required: true
+    default: "changeme"
+ports:
+  - container: 80
+volumes:
+  - vaultwarden_data:/data
+restart: unless-stopped

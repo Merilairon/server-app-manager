@@ -1,0 +1,16 @@
+name: Calibre-Web
+slug: calibre-web
+description: Web app for browsing, reading, and managing a Calibre e-book library.
+category: Media
+image: linuxserver/calibre-web:latest
+service: calibre-web
+env:
+  PUID: "1000"
+  PGID: "1000"
+  TZ: UTC
+ports:
+  - container: 8083
+volumes:
+  - calibre-web_config:/config
+  - calibre-web_books:/books
+restart: unless-stopped

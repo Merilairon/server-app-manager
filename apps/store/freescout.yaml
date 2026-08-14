@@ -1,0 +1,26 @@
+name: FreeScout
+slug: freescout
+description: Free, self-hosted helpdesk and shared mailbox for customer/patient support tickets, with its own private database.
+category: Office
+image: freescout/freescout:latest
+service: freescout
+env:
+  MYSQL_HOST: db
+  MYSQL_DATABASE: freescout
+  MYSQL_USER: freescout
+  MYSQL_PASSWORD: freescout-db-changeme
+ports:
+  - container: 80
+volumes:
+  - freescout_data:/var/www/html
+restart: unless-stopped
+extra_services:
+  - name: db
+    image: mysql:8
+    environment:
+      MYSQL_ROOT_PASSWORD: freescout-root-changeme
+      MYSQL_DATABASE: freescout
+      MYSQL_USER: freescout
+      MYSQL_PASSWORD: freescout-db-changeme
+    volumes:
+      - freescout_db:/var/lib/mysql

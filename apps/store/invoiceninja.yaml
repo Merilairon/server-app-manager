@@ -1,0 +1,33 @@
+name: Invoice Ninja
+slug: invoiceninja
+description: Self-hosted invoicing, billing, and payments platform for a small office, with its own private database.
+category: Office
+image: invoiceninja/invoiceninja:latest
+service: invoiceninja
+placeholders:
+  - name: APP_KEY
+    type: secret
+    label: Application encryption key (base64:...)
+    required: true
+    default: "base64:changemechangemechangemechangeme="
+env:
+  APP_URL: "http://localhost"
+  DB_HOST: db
+  DB_DATABASE: ninja
+  DB_USERNAME: ninja
+  DB_PASSWORD: ninja-db-changeme
+ports:
+  - container: 80
+volumes:
+  - invoiceninja_data:/var/www/app/storage
+restart: unless-stopped
+extra_services:
+  - name: db
+    image: mysql:8
+    environment:
+      MYSQL_ROOT_PASSWORD: ninja-root-changeme
+      MYSQL_DATABASE: ninja
+      MYSQL_USER: ninja
+      MYSQL_PASSWORD: ninja-db-changeme
+    volumes:
+      - invoiceninja_db:/var/lib/mysql

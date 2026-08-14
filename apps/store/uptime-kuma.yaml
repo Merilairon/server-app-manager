@@ -1,0 +1,11 @@
+name: Uptime Kuma
+slug: uptime-kuma
+description: Self-hosted uptime monitoring tool with status pages and notifications.
+category: Monitoring
+image: louislam/uptime-kuma:latest
+service: uptime-kuma
+ports:
+  - container: 3001
+volumes:
+  - uptime-kuma_data:/app/data
+restart: unless-stopped

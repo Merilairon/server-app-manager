@@ -1,0 +1,33 @@
+name: Snipe-IT
+slug: snipe-it
+description: IT and office equipment asset management system for tracking hardware and licenses, with its own private database.
+category: Office
+image: snipe/snipe-it:latest
+service: snipe-it
+placeholders:
+  - name: APP_KEY
+    type: secret
+    label: Application encryption key (base64:...)
+    required: true
+    default: "base64:changemechangemechangemechangeme="
+env:
+  APP_URL: "http://localhost"
+  DB_HOST: db
+  DB_DATABASE: snipeit
+  DB_USERNAME: snipeit
+  DB_PASSWORD: snipeit-db-changeme
+ports:
+  - container: 80
+volumes:
+  - snipe-it_data:/var/lib/snipeit
+restart: unless-stopped
+extra_services:
+  - name: db
+    image: mysql:8
+    environment:
+      MYSQL_ROOT_PASSWORD: snipeit-root-changeme
+      MYSQL_DATABASE: snipeit
+      MYSQL_USER: snipeit
+      MYSQL_PASSWORD: snipeit-db-changeme
+    volumes:
+      - snipe-it_db:/var/lib/mysql

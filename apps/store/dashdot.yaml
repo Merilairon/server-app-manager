@@ -1,0 +1,9 @@
+name: Dashdot
+slug: dashdot
+description: Aesthetic and minimal server-stats dashboard for CPU, RAM, storage, and network.
+category: Monitoring
+image: mauricenino/dashdot:latest
+service: dashdot
+ports:
+  - container: 3001
+restart: unless-stopped

@@ -1,0 +1,16 @@
+name: CryptPad
+slug: cryptpad
+description: End-to-end encrypted, collaborative office suite for documents, spreadsheets, and forms.
+category: Office
+image: cryptpad/cryptpad:latest
+service: cryptpad
+env:
+  CPAD_MAIN_DOMAIN: http://localhost
+  CPAD_SANDBOX_DOMAIN: http://localhost
+ports:
+  - container: 3000
+volumes:
+  - cryptpad_data:/cryptpad/data
+  - cryptpad_blob:/cryptpad/blob
+  - cryptpad_block:/cryptpad/block
+restart: unless-stopped

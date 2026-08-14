@@ -1,0 +1,9 @@
+name: Excalidraw
+slug: excalidraw
+description: Virtual whiteboard for sketching hand-drawn-style diagrams collaboratively.
+category: Productivity
+image: excalidraw/excalidraw:latest
+service: excalidraw
+ports:
+  - container: 80
+restart: unless-stopped

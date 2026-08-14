@@ -1,0 +1,15 @@
+name: Tautulli
+slug: tautulli
+description: Monitoring and analytics dashboard for a Plex Media Server.
+category: Media
+image: linuxserver/tautulli:latest
+service: tautulli
+env:
+  PUID: "1000"
+  PGID: "1000"
+  TZ: UTC
+ports:
+  - container: 8181
+volumes:
+  - tautulli_config:/config
+restart: unless-stopped

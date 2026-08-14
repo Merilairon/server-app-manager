@@ -35,6 +35,9 @@ services:
     restart: unless-stopped
     labels:
       - "traefik.enable=true"
+      # This container is on both `backend` and `admin`; without this label Traefik's
+      # docker provider can pick the wrong network IP (see traefik/traefik.yml).
+      - "traefik.docker.network=${TENANT_ID:-appforge}_backend"
       - "traefik.http.routers.app.rule=Host(`${BASE_DOMAIN}`) || Host(`localhost`)"
       - "traefik.http.routers.app.entrypoints=websecure"
       - "traefik.http.routers.app.service=backend@file"

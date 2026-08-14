@@ -1,0 +1,25 @@
+name: Docuseal
+slug: docuseal
+description: Open-source document signing and e-signature platform, with its own private database.
+category: Office
+image: docuseal/docuseal:latest
+service: docuseal
+env:
+  DATABASE_URL: "postgresql://docuseal:docuseal-db-changeme@db:5432/docuseal"
+  HOST: localhost
+ports:
+  - container: 3000
+volumes:
+  - docuseal_data:/data
+restart: unless-stopped
+extra_services:
+  - name: db
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: docuseal
+      POSTGRES_PASSWORD: docuseal-db-changeme
+      POSTGRES_DB: docuseal
+    volumes:
+      - docuseal_db:/var/lib/postgresql/data
+    healthcheck:
+      test: "pg_isready -U docuseal"

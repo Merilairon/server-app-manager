@@ -1,0 +1,20 @@
+name: n8n
+slug: n8n
+description: Workflow automation tool for connecting apps and services with a visual editor.
+category: DevOps
+image: n8nio/n8n:latest
+service: n8n
+placeholders:
+  - name: N8N_ENCRYPTION_KEY
+    type: secret
+    label: Encryption key
+    required: true
+    default: "changeme-encryption-key"
+env:
+  N8N_HOST: localhost
+  N8N_PROTOCOL: https
+ports:
+  - container: 5678
+volumes:
+  - n8n_data:/home/node/.n8n
+restart: unless-stopped

@@ -1,0 +1,17 @@
+name: WG Easy
+slug: wg-easy
+description: WireGuard VPN server with an easy-to-use web-based admin UI.
+category: Security
+image: ghcr.io/wg-easy/wg-easy:latest
+service: wg-easy
+placeholders:
+  - name: PASSWORD
+    type: secret
+    label: Web UI password
+    required: true
+    default: "changeme"
+ports:
+  - container: 51821
+volumes:
+  - wg-easy_data:/etc/wireguard
+restart: unless-stopped

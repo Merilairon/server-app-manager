@@ -1,0 +1,15 @@
+name: Syncthing
+slug: syncthing
+description: Continuous file synchronization tool that keeps folders in sync across devices.
+category: Productivity
+image: syncthing/syncthing:latest
+service: syncthing
+env:
+  PUID: "1000"
+  PGID: "1000"
+ports:
+  - container: 8384
+volumes:
+  - syncthing_config:/var/syncthing/config
+  - syncthing_data:/var/syncthing/data
+restart: unless-stopped

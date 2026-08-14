@@ -1,0 +1,13 @@
+name: Homarr
+slug: homarr
+description: Sleek, modern dashboard for organizing and monitoring self-hosted services.
+category: Monitoring
+image: ghcr.io/ajnart/homarr:latest
+service: homarr
+volumes:
+  - /var/run/docker.sock:/var/run/docker.sock:ro
+  - homarr_configs:/app/data/configs
+  - homarr_icons:/app/public/icons
+restart: unless-stopped
+ports:
+  - container: 7575

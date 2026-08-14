@@ -1,0 +1,12 @@
+name: Baikal
+slug: baikal
+description: CalDAV and CardDAV server with a web admin UI for shared calendars and address books.
+category: Office
+image: ckulka/baikal:latest
+service: baikal
+ports:
+  - container: 80
+volumes:
+  - baikal_config:/var/www/baikal/config
+  - baikal_data:/var/www/baikal/Specific
+restart: unless-stopped

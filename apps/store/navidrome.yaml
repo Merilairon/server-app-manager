@@ -1,0 +1,14 @@
+name: Navidrome
+slug: navidrome
+description: Self-hosted music streaming server compatible with Subsonic clients.
+category: Media
+image: deluan/navidrome:latest
+service: navidrome
+env:
+  ND_LOGLEVEL: info
+ports:
+  - container: 4533
+volumes:
+  - navidrome_data:/data
+  - navidrome_music:/music:ro
+restart: unless-stopped

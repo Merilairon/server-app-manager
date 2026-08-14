@@ -81,7 +81,7 @@ pnpm run build                  # production build → dist/frontend/browser/
 
 ### Docker Dev Stack (Hot Reload)
 
-A separate `docker-compose.dev.yml` brings up Postgres, the backend (with `cargo-watch`), and the frontend (with `ng serve` HMR) — no Traefik, direct port access.
+A separate `docker-compose.dev.yml` brings up Postgres, the backend (with `cargo-watch`), the frontend (with `ng serve` HMR), and Traefik — so apps installed from the store are reachable the same way they would be in production.
 
 ```bash
 # 1. Create dev env overrides (optional — defaults work out of the box)
@@ -95,9 +95,10 @@ pnpm run dev:docker:up
 #   Frontend (HMR):  http://localhost:4200  (proxies /api → backend)
 #   Backend API:     http://localhost:8080
 #   Postgres:        localhost:5432 (sam/sam/sam)
+#   Installed apps:  https://<slug>.app.local (see below)
 
 # 4. View logs
-docker compose -f docker-compose.dev.yml logs -f backend frontend
+docker compose -f docker-compose.dev.yml logs -f backend frontend traefik
 
 # 5. Stop
 pnpm run dev:docker:down
@@ -107,6 +108,18 @@ pnpm run dev:docker:reset
 ```
 
 Hot reload: editing Rust files triggers `cargo-watch` to recompile and restart the backend. Editing Angular files triggers `ng serve` to rebuild and push updates via HMR.
+
+#### Reaching installed apps in dev
+
+Every app installed via the store gets a Traefik router for `<slug>.<BASE_DOMAIN>` (default `BASE_DOMAIN=app.local`), same as production. To reach it locally:
+
+1. Add an entry to your hosts file for each app you install, pointing at `127.0.0.1` (or the appropriate LAN IP for the Docker host), e.g.:
+   ```
+   127.0.0.1 drawio.app.local
+   ```
+2. Open `https://drawio.app.local`. Since `app.local` isn't a real, publicly resolvable domain, Let's Encrypt can't verify it — Traefik falls back to a self-signed certificate, so expect (and accept) a browser TLS warning.
+
+Apps are **not** reachable via `localhost:<port>` unless the app definition reserves a `host` port under `ports:` **and** `PUBLISH_APP_PORTS=true` is set (see `.env.dev.example`); most store apps intentionally omit a host port and rely on Traefik sub-domain routing instead.
 
 ## Project Structure
 

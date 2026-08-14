@@ -1,0 +1,29 @@
+name: BookStack
+slug: bookstack
+description: Simple, self-hosted platform for organizing office documentation and knowledge, with its own private database.
+category: Office
+image: linuxserver/bookstack:latest
+service: bookstack
+env:
+  PUID: "1000"
+  PGID: "1000"
+  APP_URL: "http://localhost"
+  DB_HOST: db
+  DB_DATABASE: bookstack
+  DB_USER: bookstack
+  DB_PASS: bookstack-db-changeme
+ports:
+  - container: 80
+volumes:
+  - bookstack_config:/config
+restart: unless-stopped
+extra_services:
+  - name: db
+    image: mariadb:11
+    environment:
+      MYSQL_ROOT_PASSWORD: bookstack-root-changeme
+      MYSQL_DATABASE: bookstack
+      MYSQL_USER: bookstack
+      MYSQL_PASSWORD: bookstack-db-changeme
+    volumes:
+      - bookstack_db:/var/lib/mysql

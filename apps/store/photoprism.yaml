@@ -1,0 +1,22 @@
+name: PhotoPrism
+slug: photoprism
+description: AI-powered photo management app for browsing, organizing, and sharing your photo library.
+category: Media
+image: photoprism/photoprism:latest
+service: photoprism
+placeholders:
+  - name: PHOTOPRISM_ADMIN_PASSWORD
+    type: secret
+    label: Admin password
+    required: true
+    default: "changeme123"
+env:
+  PHOTOPRISM_ADMIN_USER: admin
+  PHOTOPRISM_SITE_URL: http://localhost:2342/
+  PHOTOPRISM_DISABLE_TLS: "true"
+ports:
+  - container: 2342
+volumes:
+  - photoprism_originals:/photoprism/originals
+  - photoprism_storage:/photoprism/storage
+restart: unless-stopped

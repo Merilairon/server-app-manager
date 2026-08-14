@@ -24,6 +24,11 @@
       "type": "string",
       "maxLength": 500
     },
+    "category": {
+      "type": "string",
+      "description": "Store category used for grouping/filtering in the UI (e.g. Media, Productivity, Security, Monitoring, DevOps, Office).",
+      "maxLength": 100
+    },
     "image": {
       "type": "string",
       "description": "Docker image to run (e.g. nginx:alpine)."
@@ -98,6 +103,56 @@
       "properties": {
         "mem_limit": { "type": "string" },
         "cpu_quota": { "type": "string" }
+      }
+    },
+    "command": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Optional entrypoint command/args override for the main service."
+    },
+    "extra_services": {
+      "type": "array",
+      "description": "Additional private services (e.g. a database) started alongside the main service. These join only the app's own network, never the shared backend network, and are not routed by Traefik.",
+      "items": {
+        "type": "object",
+        "required": ["name", "image"],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Compose service key for this extra service (e.g. db).",
+            "pattern": "^[a-z0-9][a-z0-9_-]*[a-z0-9]$"
+          },
+          "image": {
+            "type": "string",
+            "description": "Docker image to run for this extra service."
+          },
+          "environment": {
+            "type": "object",
+            "additionalProperties": { "type": "string" }
+          },
+          "volumes": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "healthcheck": {
+            "type": "object",
+            "properties": {
+              "test": { "type": "string" },
+              "interval": { "type": "string" },
+              "timeout": { "type": "string" },
+              "retries": { "type": "integer" }
+            }
+          },
+          "restart": {
+            "type": "string",
+            "enum": ["no", "on-failure", "always", "unless-stopped"]
+          },
+          "command": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
       }
     }
   }

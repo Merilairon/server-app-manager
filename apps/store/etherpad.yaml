@@ -1,0 +1,11 @@
+name: Etherpad
+slug: etherpad
+description: Real-time collaborative text editor for taking notes together.
+category: Productivity
+image: etherpad/etherpad:latest
+service: etherpad
+ports:
+  - container: 9001
+volumes:
+  - etherpad_data:/opt/etherpad-lite/var
+restart: unless-stopped

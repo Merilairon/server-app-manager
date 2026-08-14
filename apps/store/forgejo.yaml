@@ -1,0 +1,15 @@
+name: Forgejo
+slug: forgejo
+description: Self-hosted, community-driven lightweight Git forge (a Gitea fork).
+category: DevOps
+image: codeberg.org/forgejo/forgejo:latest
+service: forgejo
+env:
+  USER_UID: "1000"
+  USER_GID: "1000"
+  FORGEJO__database__DB_TYPE: sqlite3
+ports:
+  - container: 3000
+volumes:
+  - forgejo_data:/data
+restart: unless-stopped

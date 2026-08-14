@@ -1,0 +1,14 @@
+name: Wiki.js
+slug: wikijs
+description: Modern, lightweight wiki and knowledge base for office documentation.
+category: Office
+image: requarks/wiki:latest
+service: wikijs
+env:
+  DB_TYPE: sqlite
+  DB_FILEPATH: /data/wiki.sqlite
+ports:
+  - container: 3000
+volumes:
+  - wikijs_data:/data
+restart: unless-stopped

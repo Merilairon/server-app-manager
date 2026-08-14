@@ -1,0 +1,13 @@
+name: Overseerr
+slug: overseerr
+description: Request management and media discovery tool that integrates with Plex.
+category: Media
+image: sctx/overseerr:latest
+service: overseerr
+env:
+  TZ: UTC
+ports:
+  - container: 5055
+volumes:
+  - overseerr_config:/app/config
+restart: unless-stopped

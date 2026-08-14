@@ -1,0 +1,14 @@
+name: FreshRSS
+slug: freshrss
+description: Self-hosted RSS feed aggregator and reader.
+category: Productivity
+image: freshrss/freshrss:latest
+service: freshrss
+env:
+  TZ: UTC
+ports:
+  - container: 80
+volumes:
+  - freshrss_data:/var/www/FreshRSS/data
+  - freshrss_extensions:/var/www/FreshRSS/extensions
+restart: unless-stopped

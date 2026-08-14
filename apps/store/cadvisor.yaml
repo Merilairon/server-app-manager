@@ -1,0 +1,14 @@
+name: cAdvisor
+slug: cadvisor
+description: Container resource usage and performance monitoring agent.
+category: Monitoring
+image: gcr.io/cadvisor/cadvisor:latest
+service: cadvisor
+volumes:
+  - /:/rootfs:ro
+  - /var/run:/var/run:ro
+  - /sys:/sys:ro
+  - /var/lib/docker/:/var/lib/docker:ro
+ports:
+  - container: 8080
+restart: unless-stopped

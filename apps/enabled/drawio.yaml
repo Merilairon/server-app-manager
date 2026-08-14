@@ -1,0 +1,19 @@
+name: Draw.io
+slug: drawio
+description: Diagramming and flowcharting application for creating technical diagrams.
+category: Productivity
+image: jgraph/drawio:latest
+service: drawio
+ports:
+- host: null
+  container: 8080
+env: {}
+volumes: []
+depends_on: []
+healthcheck: null
+restart: unless-stopped
+placeholders: []
+resource_limits: null
+command: null
+extra_services: []
+status: available

@@ -1,0 +1,16 @@
+name: Kimai
+slug: kimai
+description: Web-based time tracking application for staff hours and project billing.
+category: Office
+image: kimai/kimai2:apache
+service: kimai
+env:
+  DATABASE_URL: "sqlite:///var/www/html/var/data/kimai.sqlite"
+  ADMINMAIL: admin@example.com
+  ADMINPASS: changeme
+ports:
+  - container: 8001
+volumes:
+  - kimai_data:/opt/kimai/var/data
+  - kimai_plugins:/opt/kimai/var/plugins
+restart: unless-stopped

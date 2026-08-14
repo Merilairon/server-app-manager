@@ -1,0 +1,15 @@
+name: Jellyfin
+slug: jellyfin
+description: Free software media system for managing and streaming your media library.
+category: Media
+image: jellyfin/jellyfin:latest
+service: jellyfin
+env:
+  TZ: UTC
+ports:
+  - container: 8096
+volumes:
+  - jellyfin_config:/config
+  - jellyfin_cache:/cache
+  - jellyfin_media:/media
+restart: unless-stopped

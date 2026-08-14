@@ -1,0 +1,11 @@
+name: Gogs
+slug: gogs
+description: Painless, self-hosted Git service written in Go.
+category: DevOps
+image: gogs/gogs:latest
+service: gogs
+ports:
+  - container: 3000
+volumes:
+  - gogs_data:/data
+restart: unless-stopped

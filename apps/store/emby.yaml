@@ -1,0 +1,14 @@
+name: Emby
+slug: emby
+description: Media server for organizing and streaming your personal media collection.
+category: Media
+image: emby/embyserver:latest
+service: emby
+env:
+  TZ: UTC
+ports:
+  - container: 8096
+volumes:
+  - emby_config:/config
+  - emby_media:/media
+restart: unless-stopped

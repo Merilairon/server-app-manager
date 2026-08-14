@@ -28,7 +28,12 @@ export class Login {
     this.loading = true;
     this.auth.login(username ?? '', password ?? '').subscribe({
       next: () => {
-        this.router.navigate(['/apps']);
+        this.loading = false;
+        this.router.navigate(['/']).then((ok) => {
+          if (!ok) {
+            this.error = 'Could not open dashboard. Please try again.';
+          }
+        });
       },
       error: (err) => {
         this.loading = false;

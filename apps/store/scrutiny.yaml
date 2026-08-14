@@ -1,0 +1,13 @@
+name: Scrutiny
+slug: scrutiny
+description: S.M.A.R.T. monitoring and analytics dashboard for hard drive health.
+category: Monitoring
+image: analogj/scrutiny:latest
+service: scrutiny
+volumes:
+  - /run/udev:/run/udev:ro
+  - scrutiny_config:/opt/scrutiny/config
+  - scrutiny_influxdb:/opt/scrutiny/influxdb
+ports:
+  - container: 8080
+restart: unless-stopped

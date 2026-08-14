@@ -1,0 +1,36 @@
+name: Formbricks
+slug: formbricks
+description: Open-source forms and surveys platform for intake forms, feedback, and NPS, with its own private database.
+category: Office
+image: formbricks/formbricks:latest
+service: formbricks
+placeholders:
+  - name: NEXTAUTH_SECRET
+    type: secret
+    label: Auth secret
+    required: true
+    default: "changeme-auth-secret"
+  - name: ENCRYPTION_KEY
+    type: secret
+    label: Encryption key
+    required: true
+    default: "changeme-encryption-key"
+env:
+  DATABASE_URL: "postgresql://formbricks:formbricks-db-changeme@db:5432/formbricks"
+  WEBAPP_URL: "http://localhost:3000"
+ports:
+  - container: 3000
+volumes:
+  - formbricks_uploads:/home/nextjs/apps/web/uploads
+restart: unless-stopped
+extra_services:
+  - name: db
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: formbricks
+      POSTGRES_PASSWORD: formbricks-db-changeme
+      POSTGRES_DB: formbricks
+    volumes:
+      - formbricks_db:/var/lib/postgresql/data
+    healthcheck:
+      test: "pg_isready -U formbricks"

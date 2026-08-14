@@ -1,0 +1,11 @@
+name: Filestash
+slug: filestash
+description: Web-based file manager that connects to many storage backends (local, S3, FTP, and more).
+category: Productivity
+image: machines/filestash:latest
+service: filestash
+ports:
+  - container: 8334
+volumes:
+  - filestash_data:/app/data/state
+restart: unless-stopped

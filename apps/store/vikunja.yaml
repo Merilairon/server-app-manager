@@ -1,0 +1,16 @@
+name: Vikunja
+slug: vikunja
+description: Self-hosted, open-source to-do list and task management app.
+category: Productivity
+image: vikunja/vikunja:latest
+service: vikunja
+env:
+  VIKUNJA_DATABASE_TYPE: sqlite
+  VIKUNJA_DATABASE_PATH: /db/vikunja.db
+  VIKUNJA_SERVICE_JWTSECRET: change-this-secret
+ports:
+  - container: 3456
+volumes:
+  - vikunja_data:/app/vikunja/files
+  - vikunja_db:/db
+restart: unless-stopped

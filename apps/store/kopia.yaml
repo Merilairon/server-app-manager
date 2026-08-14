@@ -1,0 +1,22 @@
+name: Kopia
+slug: kopia
+description: Fast, secure, cross-platform backup tool with a web-based UI.
+category: Productivity
+image: kopia/kopia:latest
+service: kopia
+placeholders:
+  - name: KOPIA_PASSWORD
+    type: secret
+    label: Repository password
+    required: true
+    default: "changeme"
+env:
+  KOPIA_SERVER_CONTROL_USER: admin
+command: ["server", "start", "--insecure", "--address=0.0.0.0:51515", "--without-password"]
+ports:
+  - container: 51515
+volumes:
+  - kopia_config:/app/config
+  - kopia_cache:/app/cache
+  - kopia_data:/data
+restart: unless-stopped

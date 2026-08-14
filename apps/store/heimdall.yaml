@@ -1,0 +1,15 @@
+name: Heimdall
+slug: heimdall
+description: Application dashboard providing a single pane of glass for your self-hosted services.
+category: Productivity
+image: linuxserver/heimdall:latest
+service: heimdall
+env:
+  PUID: "1000"
+  PGID: "1000"
+  TZ: UTC
+ports:
+  - container: 80
+volumes:
+  - heimdall_config:/config
+restart: unless-stopped

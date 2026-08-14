@@ -1,0 +1,16 @@
+name: Netdata
+slug: netdata
+description: Real-time performance and health monitoring for systems and containers.
+category: Monitoring
+image: netdata/netdata:latest
+service: netdata
+volumes:
+  - /proc:/host/proc:ro
+  - /sys:/host/sys:ro
+  - /var/run/docker.sock:/var/run/docker.sock:ro
+  - netdata_config:/etc/netdata
+  - netdata_lib:/var/lib/netdata
+  - netdata_cache:/var/cache/netdata
+ports:
+  - container: 19999
+restart: unless-stopped

@@ -1,0 +1,33 @@
+name: Monica
+slug: monica
+description: Personal/small-office CRM for managing contacts, clients, and relationships, with its own private database.
+category: Office
+image: monicahq/monica:latest
+service: monica
+placeholders:
+  - name: APP_KEY
+    type: secret
+    label: Application encryption key (base64:...)
+    required: true
+    default: "base64:changemechangemechangemechangeme="
+env:
+  APP_URL: "http://localhost"
+  DB_HOST: db
+  DB_DATABASE: monica
+  DB_USERNAME: monica
+  DB_PASSWORD: monica-db-changeme
+ports:
+  - container: 80
+volumes:
+  - monica_data:/var/www/html/storage
+restart: unless-stopped
+extra_services:
+  - name: db
+    image: mariadb:11
+    environment:
+      MYSQL_ROOT_PASSWORD: monica-root-changeme
+      MYSQL_DATABASE: monica
+      MYSQL_USER: monica
+      MYSQL_PASSWORD: monica-db-changeme
+    volumes:
+      - monica_db:/var/lib/mysql
